@@ -14,7 +14,8 @@ One screen answers three questions for a human explorer:
 - **Why do I go?** Science stops (geology, minerals) with a short briefing and a real
   Perseverance photo.
 
-> Status: work in progress. The terrain preprocessing is done; the web app is under construction.
+> Status: work in progress. The data layer is done (terrain cost grid, heights, slope validation,
+> typical weather and offline map tiles); the web app is under construction.
 
 ## How it works
 
@@ -73,6 +74,18 @@ small hourly summaries in `data/raw/meda_hourly/`:
 python preprocessing/build_meda_summary.py
 ```
 
+## Rebuild the slope validation
+
+Needs the HiRISE DTM tile (125 MB, not committed) in `data/raw/`:
+
+```bash
+curl -L --create-dirs -o data/raw/DTM_MOLAtopography_DeltaGeoid_Jezero_C_Edited_affine_1m_Eqc_latTs0_lon0.tif https://planetarymaps.usgs.gov/mosaic/mars2020_trn/HiRISE/DTM_MOLAtopography_DeltaGeoid_Jezero_C_Edited_affine_1m_Eqc_latTs0_lon0.tif
+```
+
+```bash
+python preprocessing/validate_slope.py
+```
+
 ## Map tiles and offline backup
 
 The base imagery is the NASA Mars Trek layer "MRO CTX, Jezero Mosaic, Controlled". Mars Trek
@@ -104,7 +117,8 @@ row 0 is the **northern** edge and column 0 is the western edge, so
 `value(row, col) = array[row * cols + col]`.
 
 - `cost_grid.json`: `slope_deg`, `roughness` (0–1) and `cost`.
-  `cost = -1` means the cell is blocked.
+  `cost = -1` means the cell is blocked. Its `meta` also has `s_max_deg` (20) and `s_block_deg`
+  (15). To draw blocked cells, use `cost = -1` or `s_block_deg`, not a fixed 20°.
 - `heights.json`: `heights_m`, meters relative to the Mars areoid (MOLA datum).
 
 `meda_summary.json` has 12 `ls_bins` of 30° of solar longitude (Ls 0° = northern spring equinox;
@@ -159,7 +173,8 @@ walkable terrain stays connected as a single area.
   differ, so these are reference values, not Mars mission requirements.
 - **Resolution.** Slope is computed on the 20 m/px CTX DEM and each ~60 m cell keeps the
   steepest 20 m pixel inside it (conservative). Hazards smaller than 20 m (boulders, small
-  scarps, sand ripples) are not resolved.
+  scarps, sand ripples) are not resolved. Even with the 15° blocking margin, about 12 % of the
+  slopes steeper than 20° are missed (see *Slope validation*, measured on one 70 km² area).
 - **Roughness** is a relief-based proxy (RMS height residual in a 100 m window), not a rock
   abundance measurement.
 - **Projection.** The DEM is equirectangular with standard parallel 0°, so its pixels are 20 m
