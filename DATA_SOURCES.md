@@ -19,6 +19,24 @@ used. Update this file every time a dataset is added.
 | Accessed | 2026-11-14 |
 | Used for | Slope, roughness, cost grid and heights: `data/cost_grid.json`, `data/heights.json`, `data/cost_grid_preview.png` (built by `preprocessing/build_cost_grid.py`) |
 
+### Mars 2020 MEDA environmental data (Jezero crater weather)
+
+| | |
+|---|---|
+| Mission / instrument | Mars 2020 Perseverance, Mars Environmental Dynamics Analyzer (MEDA): air temperature sensors (ATS), thermal infrared sensor (TIRS), pressure sensor (PS), wind sensor (WS) |
+| Product | Mars 2020 MEDA Bundle (PDS4), calibrated and derived collections, one CSV per sol and sensor |
+| Authors | Rodriguez-Manfredi, J. A. and de la Torre Juarez, M. (2021) |
+| Publisher | NASA Planetary Data System (PDS), Atmospheres Node |
+| URL | https://atmos.nmsu.edu/PDS/data/PDS4/Mars2020/mars2020_meda/ |
+| DOI | [10.17189/1522849](https://doi.org/10.17189/1522849) |
+| License | Public domain (NASA PDS data, no usage restrictions; citation requested) |
+| Accessed | 2026-11-14 |
+| Used for | Typical conditions by season and local hour: `data/meda_summary.json` (built by `preprocessing/build_meda_summary.py` from every 12th sol between sols 10 and 1850) |
+
+Solar longitude (season) is computed with the algorithm of Allison & McEwen (2000), *Planetary
+and Space Science* 48, 215-235, doi:[10.1016/S0032-0633(99)00092-6](https://doi.org/10.1016/S0032-0633(99)00092-6),
+as used by NASA GISS Mars24 (https://www.giss.nasa.gov/tools/mars24/).
+
 ## Planned datasets (not used yet)
 
 Listed so the citation is ready when each one is integrated. Move an entry to "Datasets in use"
@@ -32,7 +50,6 @@ and complete its URL, license and access date when it is added.
 | "Jezero Crater Features and Landforms" bookmark | — | NASA Mars Trek | Candidate science stops |
 | Geologic map of Jezero crater and Nili Planum (Sun & Stack, 2020, USGS SIM 3464) | — | USGS-NASA Planetary Geologic Mapping Program, doi:[10.3133/sim3464](https://doi.org/10.3133/sim3464) | Choosing stops by geologic unit |
 | Perseverance raw images (credit NASA/JPL-Caltech) | Mars 2020 cameras | https://mars.nasa.gov/mars2020/multimedia/raw-images/ | Real photo at each stop |
-| MEDA environmental data | Mars 2020 / MEDA | NASA PDS Atmospheres Node | Typical weather by season and time of sol |
 | RAD radiation data | Mars Science Laboratory (Curiosity) / RAD | NASA PDS | Radiation context |
 
 ## References for route parameters
@@ -50,4 +67,5 @@ and complete its URL, license and access date when it is added.
 |---|---|---|
 | NumPy | BSD-3-Clause | Preprocessing |
 | Rasterio | BSD-3-Clause | Preprocessing |
+| certifi | MPL-2.0 | Preprocessing (TLS root certificates for the PDS download) |
 | Matplotlib | Matplotlib License (BSD-compatible, PSF-based) | Preprocessing preview |
