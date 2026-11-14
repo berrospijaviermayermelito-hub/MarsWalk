@@ -37,6 +37,7 @@ NASA data ──► preprocessing/ (Python) ──► data/*.json ──► web/
 | `data/slope_validation.json` | Result of that comparison |
 | `preprocessing/download_trek_tiles.py` | Downloads a local backup of NASA Mars Trek map tiles |
 | `data/tiles/` | Backup of the CTX Jezero mosaic tiles (zoom 0–13), same folder layout as Mars Trek; `index.json` lists the URL templates and tile ranges |
+| `data/radiation_context.json` | Reference surface radiation dose rate (Curiosity RAD, Gale crater) for EVA dose context |
 | `data/cost_grid_preview.png` | Quick-look image of elevation, slope and cost |
 | `web/` | CesiumJS app (in progress) |
 | `DATA_SOURCES.md` | Every dataset and reference used, with URL and license/DOI |
@@ -126,6 +127,11 @@ Jezero is in the northern hemisphere). Each bin has `hourly.<variable>`, a list 
 indexed by local true solar hour, each `{median, p10, p90, n}` or `null` when there is not enough
 data. Variables: `air_temp_c`, `ground_temp_c`, `pressure_pa`, `wind_speed_ms`.
 
+`radiation_context.json` holds one reference value, `absorbed_dose_rate_ugy_per_day` (210 µGy per
+day, 8.75 µGy per hour), the formula for an EVA dose and its caveats. Radiation is shown as context
+for the planned EVA duration (for example, 3 h ≈ 26 µGy), not as a traffic-light condition that
+changes by hour.
+
 ## Route model
 
 Step cost between neighboring cells: `C = d · (1 + w_p · s / s_max + w_r · r)`, and the cell is
@@ -185,7 +191,12 @@ walkable terrain stays connected as a single area.
   floor and a sample of sols (every 12th sol).
 - **Wind** data are sparse: the MEDA wind sensor was progressively damaged by wind-blown sand from
   early 2022. Treat wind values with caution.
-- **Dust and radiation** are not in the weather summary yet.
+- **Radiation is not measured at Jezero.** Perseverance has no ionizing-radiation detector, so the
+  app uses the dose rate measured by Curiosity's RAD in Gale crater (2012–2013) as a reference.
+  Jezero is higher, with less atmosphere overhead, so its dose is expected to be somewhat higher.
+  Solar particle events are not included, and the value is an absorbed dose (µGy), not a
+  biological dose equivalent (Sv).
+- **Dust** is not in the weather summary yet.
 
 ## Data and credits
 

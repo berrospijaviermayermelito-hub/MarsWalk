@@ -68,6 +68,17 @@ Solar longitude (season) is computed with the algorithm of Allison & McEwen (200
 and Space Science* 48, 215-235, doi:[10.1016/S0032-0633(99)00092-6](https://doi.org/10.1016/S0032-0633(99)00092-6),
 as used by NASA GISS Mars24 (https://www.giss.nasa.gov/tools/mars24/).
 
+### Curiosity RAD surface radiation dose (reference value)
+
+| | |
+|---|---|
+| Mission / instrument | Mars Science Laboratory (Curiosity rover), Radiation Assessment Detector (RAD) |
+| Product | Published dose rate: about 210 micrograys per day (absorbed dose, almost entirely galactic cosmic rays), first 10 months on the surface (August 2012 – June 2013), Gale crater |
+| Source | NASA Photojournal PIA17600, "Radiation Measurements on Mars", credit NASA/JPL-Caltech/SwRI (2013-12-09): https://science.nasa.gov/photojournal/radiation-measurements-on-mars/ |
+| License | NASA media, public domain unless noted; credit NASA/JPL-Caltech/SwRI |
+| Accessed | 2026-11-14 |
+| Used for | Radiation context for an EVA: `data/radiation_context.json`. Measured in Gale crater, not Jezero (Perseverance carries no ionizing-radiation detector) |
+
 ## Planned datasets (not used yet)
 
 Listed so the citation is ready when each one is integrated. Move an entry to "Datasets in use"
@@ -80,7 +91,6 @@ and complete its URL, license and access date when it is added.
 | "Jezero Crater Features and Landforms" bookmark | — | NASA Mars Trek | Candidate science stops |
 | Geologic map of Jezero crater and Nili Planum (Sun & Stack, 2020, USGS SIM 3464) | — | USGS-NASA Planetary Geologic Mapping Program, doi:[10.3133/sim3464](https://doi.org/10.3133/sim3464) | Choosing stops by geologic unit |
 | Perseverance raw images (credit NASA/JPL-Caltech) | Mars 2020 cameras | https://mars.nasa.gov/mars2020/multimedia/raw-images/ | Real photo at each stop |
-| RAD radiation data | Mars Science Laboratory (Curiosity) / RAD | NASA PDS | Radiation context |
 
 ## References for route parameters
 
