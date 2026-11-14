@@ -1,16 +1,4 @@
-// route.js - MarsWalk: ruta A* sobre la grilla real de Jezero.
-//
-// Entra:  origen y destino en { lon, lat } (grados, longitud Este positiva).
-// Sale:   puntos de la ruta (lon, lat, altura), distancia, tiempo, alerta de retorno
-//         a pie y datos para el perfil de elevacion.
-//
-// Datos que lee (los hace Datos y GIS):
-//   data/cost_grid.json  -> meta, slope_deg, roughness, cost  (cost = -1 es celda bloqueada)
-//   data/heights.json    -> heights_m (misma forma que la grilla)
-// Las listas son planas por filas: valor(fila, col) = lista[fila * cols + col].
-// La fila 0 es el NORTE y la columna 0 es el OESTE.
-
-// ---------- Cola de prioridad (siempre saca la celda mas prometedora) ----------
+// ruta A* sobre la grilla real de Jezero.
 class MinHeap {
   constructor() { this.items = []; }
   get size() { return this.items.length; }
