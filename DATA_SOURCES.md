@@ -19,6 +19,20 @@ used. Update this file every time a dataset is added.
 | Accessed | 2026-11-14 |
 | Used for | Slope, roughness, cost grid and heights: `data/cost_grid.json`, `data/heights.json`, `data/cost_grid_preview.png` (built by `preprocessing/build_cost_grid.py`) |
 
+### Mars 2020 Terrain Relative Navigation HiRISE DTM, tile Jezero_C (validation only)
+
+| | |
+|---|---|
+| Mission / instrument | Mars Reconnaissance Orbiter (MRO), High Resolution Imaging Science Experiment (HiRISE); stereo pair ESP_045994_1985 / ESP_046060_1985 |
+| Product | Digital terrain model, 1 m/px, aligned to MOLA topography |
+| Publisher | USGS Astrogeology Science Center, for the NASA Mars 2020 project |
+| File | `DTM_MOLAtopography_DeltaGeoid_Jezero_C_Edited_affine_1m_Eqc_latTs0_lon0.tif` |
+| URL | https://planetarymaps.usgs.gov/mosaic/mars2020_trn/HiRISE/DTM_MOLAtopography_DeltaGeoid_Jezero_C_Edited_affine_1m_Eqc_latTs0_lon0.tif |
+| DOI | [10.5066/P9REJ9JN](https://doi.org/10.5066/P9REJ9JN) |
+| License | Public domain (USGS product; license not re-checked on the DOI page, confirm before submission) |
+| Accessed | 2026-11-14 |
+| Used for | Independent check of the CTX slopes: `data/slope_validation.json` (built by `preprocessing/validate_slope.py`). Not used in the app. |
+
 ### Mars 2020 MEDA environmental data (Jezero crater weather)
 
 | | |

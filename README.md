@@ -32,6 +32,8 @@ NASA data ──► preprocessing/ (Python) ──► data/*.json ──► web/
 | `data/heights.json` | Elevation per cell, for 3D relief and elevation profiles |
 | `preprocessing/build_meda_summary.py` | MEDA weather CSVs → typical conditions by season and hour |
 | `data/meda_summary.json` | Typical air/ground temperature, pressure and wind per season and local hour |
+| `preprocessing/validate_slope.py` | Compares CTX slopes with an independent HiRISE DTM |
+| `data/slope_validation.json` | Result of that comparison |
 | `data/cost_grid_preview.png` | Quick-look image of elevation, slope and cost |
 | `web/` | CesiumJS app (in progress) |
 | `DATA_SOURCES.md` | Every dataset and reference used, with URL and license/DOI |
@@ -97,6 +99,28 @@ blocked if `s > s_max` (`d` = distance, `s` = slope in degrees, `r` = roughness 
 | `walk_back_km` | 10 km | Maximum EVA walk-back distance from Apollo experience, evaluated in the JSC Walkback Test (Vos, Gernhardt & Lee, 2007, doi:10.4271/2007-01-3133) |
 | `vel_kmh` | 3.3 km/h | Walk-back speed used for Apollo 15 planning ([Bellcomm, "Apollo 15 EVA Capability"](https://www.nasa.gov/wp-content/uploads/static/history/alsj/19790073512_1979073512.pdf)) |
 | `w_p`, `w_r` | 1.0, 1.0 | Team empirical tuning (assumed values for the demo) |
+
+## Slope validation
+
+`preprocessing/validate_slope.py` compares the CTX slopes with an independent HiRISE elevation
+model (1 m/px, different stereo images) averaged to the same 20 m grid, over 69.6 km² around the
+landing site and the delta front. Results are in `data/slope_validation.json`.
+
+| Check | Result |
+|---|---|
+| Mean slope difference (CTX − HiRISE) | 0.05° (no bias) |
+| Median absolute difference | 1.1° |
+| RMSE | 2.5° |
+| Cells within 5° | 94.9 % |
+| Mean elevation difference | −0.15 m |
+| Same walkable/blocked class at 20° | 99.2 % of cells |
+| HiRISE cells steeper than 20° that the cost grid also blocks | about 61 % |
+
+The CTX slopes are unbiased on average, but CTX smooths short, steep scarps: about 39 % of the
+cells that HiRISE shows as steeper than 20° are not blocked in the cost grid (their HiRISE slope
+is typically 23°, up to about 32°). A route can therefore cross a short slope steeper than the
+limit. Blocking at 15° on the CTX slope instead of 20° would catch 88 % of them and block 2.8 %
+of the area instead of 1.3 %.
 
 ## Limitations
 
