@@ -1,267 +1,380 @@
 // ═══════════════════════════════════════════════════════════════════════
 // MarsWalk – map.js
-// Leaflet map skeleton for Jezero Crater EVA planner.
-// No frameworks, no build step. Pure ES5-compatible JS.
+// Leaflet map for the Jezero crater EVA planner: Mars CRS, NASA layers,
+// habitat, science stops, walk-back radius, route drawing and safety checks.
 // ═══════════════════════════════════════════════════════════════════════
 
-// ── Tile endpoint (Mars Trek WMTS, equirectangular) ────────────────────
-// Source: https://trek.nasa.gov/tiles/apidoc/trekAPI.html?body=mars
-// Template: https://trek.nasa.gov/tiles/Mars/EQ/{layer}/1.0.0/{style}/{TileMatrixSet}/{z}/{y}/{x}.png
-// Layer: Mars_Viking_MDIM21_ClrMosaic_global_232m  (global color mosaic)
-const MARS_TREK_TILE_URL =
-  "https://trek.nasa.gov/tiles/Mars/EQ/Mars_Viking_MDIM21_ClrMosaic_global_232m/1.0.0/default/default028mm/{z}/{y}/{x}.jpg";
+(function () {
+  var CFG = window.MW_CONFIG;
+  var R_KM = CFG.MARS_RADIUS_KM;
 
-// ── Configuration ──────────────────────────────────────────────────────
-const CONFIG = {
-  // Jezero crater center
-  CENTER_LAT: 18.4386,   // °N
-  CENTER_LNG: 77.4508,   // °E
-  INITIAL_ZOOM: 7,
+  // ── Mars CRS ─────────────────────────────────────────────────────────
+  // Equirectangular (Plate Carrée) like Mars Trek "EQ" tiles, but with the
+  // Mars radius so map.distance() and the scale bar measure Mars kilometers.
+  // Never Web Mercator for Mars.
+  var MarsCRS = L.extend({}, L.CRS.EPSG4326, { code: "IAU2000:49900", R: R_KM * 1000 });
 
-  // Safety radius – assumed value for demo
-  // TODO: cite source for realistic walk-back limit
-  walk_back_km: 10, // km – "assumed value for demo"
+  // ── Geometry helpers (sphere with Mars radius) ───────────────────────
+  var toRad = Math.PI / 180;
 
-  // Mars radius for distance calculations (km)
-  MARS_RADIUS_KM: 3389.5,
-};
-
-// ── UI references ──────────────────────────────────────────────────────
-var dotTiles  = document.getElementById("dot-tiles");
-var lblTiles  = document.getElementById("lbl-tiles");
-var dotRoute  = document.getElementById("dot-route");
-var lblRoute  = document.getElementById("lbl-route");
-var errorBanner = document.getElementById("error-banner");
-
-var valDistance = document.getElementById("val-distance");
-var valTime    = document.getElementById("val-time");
-var valStops   = document.getElementById("val-stops");
-
-// ── Helpers ────────────────────────────────────────────────────────────
-function showError(msg) {
-  errorBanner.style.display = "block";
-  errorBanner.textContent = msg;
-}
-
-function clearError() {
-  errorBanner.style.display = "none";
-  errorBanner.textContent = "";
-}
-
-/** Convert km to approximate degrees on Mars at a given latitude. */
-function kmToDeg(km, lat) {
-  var degLat = km / (2 * Math.PI * CONFIG.MARS_RADIUS_KM / 360);
-  // Not used for circle radius (Leaflet handles meters), but useful later
-  return degLat;
-}
-
-/** Convert km to meters (Leaflet circle uses meters). */
-function kmToMeters(km) { return km * 1000; }
-
-// ═══════════════════════════════════════════════════════════════════════
-// MAP SETUP  – Equirectangular CRS (NEVER Web Mercator for Mars)
-// ═══════════════════════════════════════════════════════════════════════
-var map = L.map("map", {
-  crs: L.CRS.EPSG4326,   // Equirectangular / Plate Carrée
-  center: [CONFIG.CENTER_LAT, CONFIG.CENTER_LNG],
-  zoom: CONFIG.INITIAL_ZOOM,
-  minZoom: 1,
-  maxZoom: 10,
-  zoomControl: true,
-  attributionControl: true,
-});
-
-// ── Base tiles ─────────────────────────────────────────────────────────
-var tileLoadErrors = 0;
-var tileLoadOk     = 0;
-
-var baseTiles = L.tileLayer(MARS_TREK_TILE_URL, {
-  attribution: "Tiles © NASA/JPL/USGS – Mars Trek",
-  tms: true,          // Mars Trek uses TMS (y-axis inverted)
-  maxZoom: 10,
-  errorTileUrl: "",   // blank on missing tile
-}).addTo(map);
-
-baseTiles.on("tileload", function () {
-  tileLoadOk++;
-  if (tileLoadOk === 1) {
-    dotTiles.className = "dot ok";
-    lblTiles.textContent = "Base tiles loaded";
-    clearError();
-  }
-});
-
-baseTiles.on("tileerror", function (e) {
-  tileLoadErrors++;
-  dotTiles.className = "dot warn";
-  lblTiles.textContent = "Tile errors: " + tileLoadErrors;
-  if (tileLoadOk === 0) {
-    showError("Unable to load Mars Trek tiles. Check your connection or try later.");
-  }
-});
-
-// ── Overlay placeholders (empty layers for the layer selector) ─────────
-var overlaySlope     = L.layerGroup();  // Placeholder – no real data yet
-var overlayRoughness = L.layerGroup();  // Placeholder
-var overlayMinerals  = L.layerGroup();  // Placeholder
-var overlayIce       = L.layerGroup();  // Placeholder
-
-var baseMaps = {
-  "Mars Viking Mosaic": baseTiles,
-};
-
-var overlayMaps = {
-  "Slope":     overlaySlope,
-  "Roughness": overlayRoughness,
-  "Minerals":  overlayMinerals,
-  "Ice":       overlayIce,
-};
-
-L.control.layers(baseMaps, overlayMaps, { collapsed: false }).addTo(map);
-
-// ═══════════════════════════════════════════════════════════════════════
-// MARKERS
-// ═══════════════════════════════════════════════════════════════════════
-
-// TODO: confirm with team – coordinates are approximate placeholders.
-
-// Habitat – on the crater floor
-var habitatLatLng = [18.4386, 77.4508]; // TODO: confirm with team
-var habitatMarker = L.marker(habitatLatLng, {
-  title: "Habitat (demo)",
-}).addTo(map)
-  .bindPopup("<b>🏠 Habitat</b><br>Fictional base on Jezero crater floor");
-
-// Science stops – along the delta front
-var scienceStops = [
-  // TODO: confirm with team
-  { name: "Delta outcrop A – Carbonates", latlng: [18.48, 77.41] },
-  { name: "Delta outcrop B – Clay minerals", latlng: [18.50, 77.44] },
-  { name: "Delta outcrop C – Layered deposits", latlng: [18.51, 77.47] },
-];
-
-var stopMarkers = [];
-scienceStops.forEach(function (stop, i) {
-  var m = L.circleMarker(stop.latlng, {
-    radius: 8,
-    color: "#4fa0ff",
-    fillColor: "#4fa0ff",
-    fillOpacity: 0.7,
-    weight: 2,
-  }).addTo(map)
-    .bindPopup("<b>🔬 Stop " + (i + 1) + "</b><br>" + stop.name);
-  stopMarkers.push(m);
-});
-
-valStops.textContent = scienceStops.length + " planned";
-
-// ═══════════════════════════════════════════════════════════════════════
-// SAFETY CIRCLE  – walk-back radius
-// ═══════════════════════════════════════════════════════════════════════
-var walkBackCircle = L.circle(habitatLatLng, {
-  radius: kmToMeters(CONFIG.walk_back_km),
-  color: "#ffb74d",
-  weight: 1.5,
-  dashArray: "6 4",
-  fillColor: "#ffb74d",
-  fillOpacity: 0.06,
-  interactive: false,
-}).addTo(map);
-
-// ═══════════════════════════════════════════════════════════════════════
-// ROUTE DRAWING
-// ═══════════════════════════════════════════════════════════════════════
-
-var currentRoute = null; // L.polyline reference
-
-/**
- * Draw a polyline route on the map.
- * @param {Array<[number, number]>} coords – array of [lat, lng] pairs
- * @param {Object}  [opts]  – optional Leaflet polyline options
- * @returns {L.Polyline} the drawn polyline
- *
- * In production this will be called by route.js with A* output.
- * For now it uses a hardcoded demo path.
- */
-function drawRoute(coords, opts) {
-  // Remove previous route if any
-  if (currentRoute) {
-    map.removeLayer(currentRoute);
+  function distanceKm(a, b) {
+    var dLat = (b[0] - a[0]) * toRad;
+    var dLon = (b[1] - a[1]) * toRad;
+    var x = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+            Math.cos(a[0] * toRad) * Math.cos(b[0] * toRad) *
+            Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    return R_KM * 2 * Math.atan2(Math.sqrt(x), Math.sqrt(1 - x));
   }
 
-  var defaults = {
-    color: "#3ddc84",
-    weight: 3,
-    opacity: 0.9,
-    lineJoin: "round",
-  };
-
-  var options = Object.assign({}, defaults, opts || {});
-
-  currentRoute = L.polyline(coords, options).addTo(map);
-
-  // Update sidebar
-  dotRoute.className = "dot ok";
-  lblRoute.textContent = "Demo route loaded";
-
-  // Rough distance calculation along the polyline (km on Mars)
-  var totalKm = 0;
-  for (var i = 1; i < coords.length; i++) {
-    totalKm += haversine(coords[i - 1], coords[i]);
+  /** Point at `km` from `center` along `bearingDeg`, on Mars. */
+  function destination(center, km, bearingDeg) {
+    var d = km / R_KM, brg = bearingDeg * toRad;
+    var lat1 = center[0] * toRad, lon1 = center[1] * toRad;
+    var lat2 = Math.asin(Math.sin(lat1) * Math.cos(d) + Math.cos(lat1) * Math.sin(d) * Math.cos(brg));
+    var lon2 = lon1 + Math.atan2(Math.sin(brg) * Math.sin(d) * Math.cos(lat1),
+                                 Math.cos(d) - Math.sin(lat1) * Math.sin(lat2));
+    return [lat2 / toRad, lon2 / toRad];
   }
-  valDistance.textContent = totalKm.toFixed(2) + " km";
-  // vel_kmh not yet defined by team; placeholder at 3 km/h
-  // "assumed value for demo"
-  var vel = 3; // km/h – assumed value for demo
-  var hours = totalKm / vel;
-  var mins  = Math.round(hours * 60);
-  valTime.textContent = mins + " min (@ " + vel + " km/h)";
 
-  return currentRoute;
-}
+  /**
+   * Circle with a true Mars radius. L.circle() is not used because Leaflet
+   * converts meters to degrees with the Earth radius internally.
+   */
+  function marsCircle(center, km, options) {
+    var pts = [];
+    for (var b = 0; b < 360; b += 3) pts.push(destination(center, km, b));
+    return L.polygon(pts, options);
+  }
 
-/** Haversine distance on Mars (km). */
-function haversine(a, b) {
-  var R = CONFIG.MARS_RADIUS_KM;
-  var dLat = (b[0] - a[0]) * Math.PI / 180;
-  var dLon = (b[1] - a[1]) * Math.PI / 180;
-  var lat1 = a[0] * Math.PI / 180;
-  var lat2 = b[0] * Math.PI / 180;
+  /** Cumulative distance (km) at each vertex of a polyline. */
+  function cumulativeKm(coords) {
+    var out = [0];
+    for (var i = 1; i < coords.length; i++) out.push(out[i - 1] + distanceKm(coords[i - 1], coords[i]));
+    return out;
+  }
 
-  var x = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-          Math.cos(lat1) * Math.cos(lat2) *
-          Math.sin(dLon / 2) * Math.sin(dLon / 2);
-  return R * 2 * Math.atan2(Math.sqrt(x), Math.sqrt(1 - x));
-}
+  // ── Tile layer with local fallback ───────────────────────────────────
+  // If a Mars Trek tile fails, try the copy in web/tiles/ once before giving up.
+  var FallbackTileLayer = L.TileLayer.extend({
+    createTile: function (coords, done) {
+      var tile = L.TileLayer.prototype.createTile.call(this, coords, done);
+      tile._mwCoords = { x: coords.x, y: coords.y, z: this._getZoomForUrl() };
+      return tile;
+    },
+    _tileOnError: function (done, tile, e) {
+      if (this.options.fallbackUrl && !tile._mwFallback) {
+        tile._mwFallback = true;
+        this.fire("tilefallback");
+        tile.src = L.Util.template(this.options.fallbackUrl, tile._mwCoords);
+        return;
+      }
+      L.TileLayer.prototype._tileOnError.call(this, done, tile, e);
+    },
+  });
 
-// ── Demo route (hardcoded for the 30 s video) ─────────────────────────
-// Path: Habitat → Stop A → Stop B → Stop C
-// TODO: confirm with team – replace with A* output from route.js
-var DEMO_ROUTE = [
-  habitatLatLng,
-  [18.44, 77.45],
-  [18.45, 77.43],
-  scienceStops[0].latlng,
-  [18.49, 77.42],
-  scienceStops[1].latlng,
-  [18.505, 77.455],
-  scienceStops[2].latlng,
-];
+  function trekLayer(def, extra) {
+    var opts = L.extend({
+      maxNativeZoom: def.maxNativeZoom,
+      maxZoom: CFG.MAX_ZOOM,
+      fallbackUrl: def.fallbackUrl,
+      opacity: def.opacity === undefined ? 1 : def.opacity,
+      attribution: "NASA/JPL/USGS – Mars Trek",
+      // Mars Trek WMTS rows start at the top-left: do NOT set tms:true.
+    }, extra || {});
+    if (def.bounds) opts.bounds = L.latLngBounds(def.bounds);
+    return new FallbackTileLayer(def.url, opts);
+  }
 
-drawRoute(DEMO_ROUTE);
+  // ── Map ──────────────────────────────────────────────────────────────
+  var map = L.map("map", {
+    crs: MarsCRS,
+    center: CFG.CENTER,
+    zoom: CFG.INITIAL_ZOOM,
+    minZoom: 3,
+    maxZoom: CFG.MAX_ZOOM,
+    zoomControl: true,
+  });
+  L.control.scale({ imperial: false, position: "bottomright" }).addTo(map);
 
-// Fit map to show the full route + circle
-map.fitBounds(currentRoute.getBounds().pad(0.3));
+  var B = CFG.BASE_LAYERS;
+  var viking = trekLayer(B.viking);
+  var ctx = trekLayer(B.ctx);
+  var hirise = trekLayer(B.hirise);
 
-// ═══════════════════════════════════════════════════════════════════════
-// EXPORTS (for route.js integration)
-// ═══════════════════════════════════════════════════════════════════════
-// route.js will call:  drawRoute(pathFromAStar);
-// It will also need:   CONFIG, habitatLatLng, scienceStops
-window.MarsWalk = {
-  drawRoute:     drawRoute,
-  CONFIG:        CONFIG,
-  habitatLatLng: habitatLatLng,
-  scienceStops:  scienceStops,
-  map:           map,
-};
+  // Viking stays underneath as global context; high-res mosaics on top.
+  var baseMaps = {};
+  baseMaps[B.ctx.name] = L.layerGroup([trekLayer(B.viking), ctx]);
+  baseMaps[B.hirise.name] = L.layerGroup([trekLayer(B.viking), trekLayer(B.ctx), hirise]);
+  baseMaps[B.viking.name] = viking;
+  baseMaps[B.ctx.name].addTo(map);
+
+  var overlayMaps = {};
+  Object.keys(CFG.OVERLAYS).forEach(function (k) {
+    var def = CFG.OVERLAYS[k];
+    overlayMaps[def.name] = trekLayer(def);
+  });
+
+  // ── Tile status (loading / ok / fallback / error) ────────────────────
+  var tileState = { ok: 0, err: 0, fallback: false };
+  function watchTiles(layer) {
+    layer.on("tileload", function () {
+      tileState.ok++;
+      MW.ui.setStatus("tiles", tileState.fallback ? "warn" : "ok",
+        tileState.fallback ? "Base map loaded (some tiles from local copy)" : "Base map loaded (Mars Trek)");
+      MW.ui.clearError("tiles");
+    });
+    layer.on("tilefallback", function () { tileState.fallback = true; });
+    layer.on("tileerror", function () {
+      tileState.err++;
+      if (tileState.ok === 0) {
+        MW.ui.setStatus("tiles", "err", "Base map unavailable");
+        MW.ui.showError("tiles", "Mars Trek tiles could not be loaded and no local copy exists for this area. Check your connection.");
+      }
+    });
+  }
+  watchTiles(ctx);
+  watchTiles(hirise);
+  watchTiles(viking);
+
+  // ── Habitat, stops, walk-back radius ─────────────────────────────────
+  var habitatIcon = L.divIcon({ className: "mw-habitat", html: "⌂", iconSize: [30, 30] });
+  var stopsLayer = L.layerGroup();
+  var safetyLayer = L.layerGroup();
+  var habitat = null;
+  var stops = [];
+  var stopMarkers = {};
+
+  function setHabitat(h) {
+    habitat = h;
+    L.marker(h.latlng, { icon: habitatIcon, title: h.name, zIndexOffset: 500 })
+      .bindTooltip(h.name, { direction: "top", offset: [0, -14] })
+      .addTo(map);
+    drawWalkBack();
+  }
+
+  function drawWalkBack() {
+    safetyLayer.clearLayers();
+    var km = CFG.PARAMS.walk_back_km.value;
+    marsCircle(habitat.latlng, km, {
+      color: "#ffb74d", weight: 1.5, dashArray: "6 4",
+      fillColor: "#ffb74d", fillOpacity: 0.05, interactive: false,
+    }).addTo(safetyLayer);
+    var labelPos = destination(habitat.latlng, km, 0);
+    L.marker(labelPos, {
+      interactive: false,
+      icon: L.divIcon({ className: "mw-map-label", html: "Walk-back limit · " + km + " km", iconSize: [150, 18], iconAnchor: [75, 22] }),
+    }).addTo(safetyLayer);
+    safetyLayer.addTo(map);
+  }
+
+  function setStops(list, onClick) {
+    stops = list;
+    stopsLayer.clearLayers();
+    list.forEach(function (s) {
+      var m = L.marker(s.latlng, {
+        title: s.name,
+        icon: L.divIcon({ className: "mw-stop", html: s.id, iconSize: [26, 26] }),
+        zIndexOffset: 400,
+      })
+        .bindTooltip(s.name + "<br><small>" + s.mineral + " · " + s.instrument + "</small>", { direction: "top", offset: [0, -12] })
+        .on("click", function () { onClick(s); })
+        .addTo(stopsLayer);
+      stopMarkers[s.id] = m;
+    });
+    stopsLayer.addTo(map);
+  }
+
+  function highlightStop(id) {
+    Object.keys(stopMarkers).forEach(function (k) {
+      var el = stopMarkers[k].getElement();
+      if (el) el.classList.toggle("active", k === id);
+    });
+  }
+
+  // ── Blocked terrain from cost_grid.json (slope > s_max painted red) ──
+  var blockedLayer = null;
+
+  /** Accepts flat arrays (row-major, north row first) or nested [row][col]. */
+  function gridValue(arr, r, c, cols) {
+    return Array.isArray(arr[0]) ? arr[r][c] : arr[r * cols + c];
+  }
+
+  function setCostGrid(grid) {
+    var sMax = grid.s_max_deg || CFG.PARAMS.s_max_deg.value;
+    if (!grid.slope_deg) return;
+    var canvas = document.createElement("canvas");
+    canvas.width = grid.cols;
+    canvas.height = grid.rows;
+    var g = canvas.getContext("2d");
+    var img = g.createImageData(grid.cols, grid.rows);
+    for (var r = 0; r < grid.rows; r++) {
+      for (var c = 0; c < grid.cols; c++) {
+        var i = (r * grid.cols + c) * 4;
+        if (gridValue(grid.slope_deg, r, c, grid.cols) > sMax) {
+          img.data[i] = 239; img.data[i + 1] = 83; img.data[i + 2] = 80; img.data[i + 3] = 150;
+        }
+      }
+    }
+    g.putImageData(img, 0, 0);
+    blockedLayer = L.imageOverlay(canvas.toDataURL(), grid.bounds, { className: "mw-pixelated" });
+    overlayMaps["Blocked terrain (slope > " + sMax + "°)"] = blockedLayer;
+    blockedLayer.addTo(map);
+  }
+
+  /** Values of a cost_grid.json field sampled at each point (null outside the grid). */
+  function sampleGrid(grid, field, coords) {
+    if (!grid || !grid[field]) return null;
+    var s = grid.bounds[0][0], w = grid.bounds[0][1], n = grid.bounds[1][0], e = grid.bounds[1][1];
+    return coords.map(function (p) {
+      var r = Math.floor((n - p[0]) / (n - s) * grid.rows);
+      var c = Math.floor((p[1] - w) / (e - w) * grid.cols);
+      if (r < 0 || c < 0 || r >= grid.rows || c >= grid.cols) return null;
+      return gridValue(grid[field], r, c, grid.cols);
+    });
+  }
+  function sampleElevation(grid, coords) { return sampleGrid(grid, "elevation_m", coords); }
+
+  /** Resample a polyline every `stepKm`, keeping original vertices. */
+  function densify(coords, stepKm) {
+    var out = [coords[0]];
+    for (var i = 1; i < coords.length; i++) {
+      var a = coords[i - 1], b = coords[i];
+      var n = Math.max(1, Math.ceil(distanceKm(a, b) / stepKm));
+      for (var k = 1; k <= n; k++) out.push([a[0] + (b[0] - a[0]) * k / n, a[1] + (b[1] - a[1]) * k / n]);
+    }
+    return out;
+  }
+
+  // ── Route drawing + safety checks ────────────────────────────────────
+  var routeLayer = L.layerGroup().addTo(map);
+  var route = null;
+
+  /**
+   * Draw a route and compute its summary. Called with demo data or by route.js.
+   * @param {Array<[number, number]>} coords  [lat, lng] pairs, habitat → … → habitat
+   * @param {Object} [meta]  { elevations_m: [...], label: "A* route" }
+   */
+  function drawRoute(coords, meta) {
+    meta = meta || {};
+    routeLayer.clearLayers();
+    var cum = cumulativeKm(coords);
+    var totalKm = cum[cum.length - 1];
+
+    // Safety: any vertex outside the walk-back radius is flagged.
+    var limitKm = CFG.PARAMS.walk_back_km.value;
+    var maxFromHab = 0;
+    coords.forEach(function (p) { maxFromHab = Math.max(maxFromHab, distanceKm(habitat.latlng, p)); });
+    var outside = maxFromHab > limitKm;
+
+    // Safety: sample slope every ~20 m; any point above s_max is blocked terrain.
+    var slopeChecked = false, blockedPts = [], maxSlope = null;
+    if (MW.costGrid && MW.costGrid.slope_deg) {
+      slopeChecked = true;
+      var sMax = MW.costGrid.s_max_deg || CFG.PARAMS.s_max_deg.value;
+      var dense = densify(coords, 0.02);
+      sampleGrid(MW.costGrid, "slope_deg", dense).forEach(function (v, i) {
+        if (v === null) return;
+        maxSlope = maxSlope === null ? v : Math.max(maxSlope, v);
+        if (v > sMax) blockedPts.push(dense[i]);
+      });
+    }
+    var unsafe = outside || blockedPts.length > 0;
+
+    L.polyline(coords, { color: "#000", weight: 7, opacity: 0.35 }).addTo(routeLayer);
+    L.polyline(coords, { color: unsafe ? "#ef5350" : "#3ddc84", weight: 3.5, opacity: 0.95, lineJoin: "round" }).addTo(routeLayer);
+    blockedPts.forEach(function (p) {
+      L.circleMarker(p, { radius: 3, color: "#fff", weight: 1, fillColor: "#ef5350", fillOpacity: 1, interactive: false }).addTo(routeLayer);
+    });
+
+    // Index of the route vertex closest to each stop (for EVA steps / profile).
+    var stopIndex = {};
+    stops.forEach(function (s) {
+      var best = 0, bestD = Infinity;
+      coords.forEach(function (p, i) { var d = distanceKm(p, s.latlng); if (d < bestD) { bestD = d; best = i; } });
+      stopIndex[s.id] = best;
+    });
+
+    var walkH = totalKm / CFG.PARAMS.vel_kmh.value;
+    var evaH = walkH + stops.length * CFG.PARAMS.stop_min.value / 60;
+
+    route = {
+      coords: coords,
+      cumKm: cum,
+      totalKm: totalKm,
+      walkH: walkH,
+      evaH: evaH,
+      maxFromHabKm: maxFromHab,
+      outsideWalkBack: outside,
+      slopeChecked: slopeChecked,
+      crossesBlocked: blockedPts.length > 0,
+      maxSlopeDeg: maxSlope,
+      overTime: evaH > CFG.PARAMS.eva_limit_h.value,
+      stopIndex: stopIndex,
+      elevations: meta.elevations_m || null,
+      label: meta.label || "Route",
+    };
+    MW.ui.setStatus("route", "ok", route.label + " loaded");
+    document.dispatchEvent(new CustomEvent("mw:route", { detail: route }));
+    return route;
+  }
+
+  function fitRoute() {
+    if (route) map.fitBounds(L.latLngBounds(route.coords).pad(0.25));
+  }
+
+  // ── Layer control & legend (added once all layers exist) ─────────────
+  function finishControls() {
+    overlayMaps["Science stops (CRISM / HiRISE)"] = stopsLayer;
+    overlayMaps["Walk-back radius"] = safetyLayer;
+    overlayMaps["EVA route"] = routeLayer;
+    L.control.layers(baseMaps, overlayMaps, { collapsed: window.innerWidth < 900, position: "topright" }).addTo(map);
+
+    var legend = L.control({ position: "bottomleft" });
+    legend.onAdd = function () {
+      var d = L.DomUtil.create("div", "mw-legend");
+      d.innerHTML =
+        '<div><i class="sw" style="background:#3ddc84"></i>Safe route</div>' +
+        '<div><i class="sw" style="background:#ef5350"></i>Leaves walk-back radius / blocked slope</div>' +
+        '<div><i class="sw dashed"></i>Walk-back radius</div>' +
+        '<div><i class="sw dot">A</i>Science stop</div>';
+      return d;
+    };
+    legend.addTo(map);
+  }
+
+  // ── EVA walker marker ────────────────────────────────────────────────
+  var walker = null;
+  function setWalker(latlng) {
+    if (!walker) {
+      walker = L.marker(latlng, {
+        icon: L.divIcon({ className: "mw-walker", html: "", iconSize: [16, 16] }),
+        zIndexOffset: 1000, interactive: false,
+      }).addTo(map);
+    } else {
+      walker.setLatLng(latlng);
+    }
+  }
+  function removeWalker() { if (walker) { map.removeLayer(walker); walker = null; } }
+
+  // ── Public API ───────────────────────────────────────────────────────
+  window.MW = window.MW || {};
+  L.extend(window.MW, {
+    map: map,
+    distanceKm: distanceKm,
+    cumulativeKm: cumulativeKm,
+    setHabitat: setHabitat,
+    setStops: setStops,
+    highlightStop: highlightStop,
+    setCostGrid: setCostGrid,
+    sampleElevation: sampleElevation,
+    densify: densify,
+    drawRoute: drawRoute,
+    fitRoute: fitRoute,
+    finishControls: finishControls,
+    setWalker: setWalker,
+    removeWalker: removeWalker,
+    getRoute: function () { return route; },
+    getHabitat: function () { return habitat; },
+    getStops: function () { return stops; },
+  });
+})();

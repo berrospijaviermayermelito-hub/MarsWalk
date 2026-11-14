@@ -10,7 +10,8 @@ stop briefings, conditions traffic light, deployment (GitHub Pages / Vercel).
 ## Hard constraints
 - ALL UI text in English (submission requirement). Code comments in English too.
 - Only OSI-licensed libraries: Leaflet, Chart.js, CesiumJS. No Mapbox, no Google Maps.
-- Mars is not Earth: use an equirectangular CRS (L.CRS.EPSG4326 or a custom CRS), never Web Mercator.
+- Mars is not Earth: use the equirectangular Mars CRS in map.js (R = 3389.5 km), never Web Mercator.
+  Never use L.circle (it uses the Earth radius internally): use marsCircle(). Mars Trek tiles: tms must be false.
 - No backend. Static files only; data comes from data/*.json (cost_grid.json, meda_summary.json).
 - Every screen needs loading and error states.
 - Map tiles come from Mars Trek WMTS; keep a local fallback copy of tiles for the work area.
@@ -31,7 +32,9 @@ Jezero crater, approx. 18.4° N, 77.5° E. Fictional habitat on the crater floor
 
 ## Structure
 ```
-web/index.html   web/map.js   web/route.js (A*, owned by another teammate)   web/briefing.js
+web/index.html  web/style.css  web/config.js (params, layers, sources)  web/ui.js
+web/map.js  web/profile.js  web/briefing.js  web/app.js  web/sample-data.js
+web/route.js (A*, owned by another teammate)   web/tiles/ (local CTX fallback)
 preprocessing/   (Python, data team)      data/   (light outputs)
 ```
 Do not edit preprocessing/ or data/ without asking.
