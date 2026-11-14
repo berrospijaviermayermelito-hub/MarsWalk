@@ -33,6 +33,10 @@ used. Update this file every time a dataset is added.
 | Accessed | 2026-11-14 |
 | Used for | Typical conditions by season and local hour: `data/meda_summary.json` (built by `preprocessing/build_meda_summary.py` from every 12th sol between sols 10 and 1850) |
 
+Note on the host: `atmos.nmsu.edu` is the official NASA PDS Atmospheres Node, which New Mexico
+State University operates for NASA. The data are NASA mission data archived by the PDS
+(https://pds.nasa.gov/); the PDS asks users to cite the data set, as done here.
+
 Solar longitude (season) is computed with the algorithm of Allison & McEwen (2000), *Planetary
 and Space Science* 48, 215-235, doi:[10.1016/S0032-0633(99)00092-6](https://doi.org/10.1016/S0032-0633(99)00092-6),
 as used by NASA GISS Mars24 (https://www.giss.nasa.gov/tools/mars24/).
