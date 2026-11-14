@@ -34,6 +34,8 @@ NASA data ──► preprocessing/ (Python) ──► data/*.json ──► web/
 | `data/meda_summary.json` | Typical air/ground temperature, pressure and wind per season and local hour |
 | `preprocessing/validate_slope.py` | Compares CTX slopes with an independent HiRISE DTM |
 | `data/slope_validation.json` | Result of that comparison |
+| `preprocessing/download_trek_tiles.py` | Downloads a local backup of NASA Mars Trek map tiles |
+| `data/tiles/` | Backup of the CTX Jezero mosaic tiles (zoom 0–13), same folder layout as Mars Trek; `index.json` lists the URL templates and tile ranges |
 | `data/cost_grid_preview.png` | Quick-look image of elevation, slope and cost |
 | `web/` | CesiumJS app (in progress) |
 | `DATA_SOURCES.md` | Every dataset and reference used, with URL and license/DOI |
@@ -69,6 +71,28 @@ small hourly summaries in `data/raw/meda_hourly/`:
 
 ```bash
 python preprocessing/build_meda_summary.py
+```
+
+## Map tiles and offline backup
+
+The base imagery is the NASA Mars Trek layer "MRO CTX, Jezero Mosaic, Controlled". Mars Trek
+allows browser requests from any site (CORS `Access-Control-Allow-Origin: *`). A copy of the
+Jezero tiles is kept in `data/tiles/` with the same folder layout, so the app only has to change
+the base URL if Mars Trek is slow or down:
+
+```
+live:   https://trek.nasa.gov/tiles/Mars/EQ/JEZ_ctx_B_soc_008_orthoMosaic_6m_Eqc_latTs0_lon0/1.0.0/default/default028mm/{z}/{row}/{col}.png
+backup: data/tiles/JEZ_ctx_B_soc_008_orthoMosaic_6m_Eqc_latTs0_lon0/1.0.0/default/default028mm/{z}/{row}/{col}.png
+```
+
+Tiling scheme: geographic (equirectangular), 256 px tiles, level 0 is 2 × 1 tiles covering the
+whole planet (in CesiumJS: `GeographicTilingScheme` with 2 × 1 root tiles on a Mars ellipsoid).
+The backup only covers the Jezero work area; outside it the app needs the live service.
+
+Rebuild the backup:
+
+```bash
+python preprocessing/download_trek_tiles.py
 ```
 
 ## Data format

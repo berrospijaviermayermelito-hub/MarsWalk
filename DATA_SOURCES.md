@@ -19,6 +19,19 @@ used. Update this file every time a dataset is added.
 | Accessed | 2026-11-14 |
 | Used for | Slope, roughness, cost grid and heights: `data/cost_grid.json`, `data/heights.json`, `data/cost_grid_preview.png` (built by `preprocessing/build_cost_grid.py`) |
 
+### MRO CTX, Jezero Mosaic, Controlled (base imagery tiles)
+
+| | |
+|---|---|
+| Mission / instrument | Mars Reconnaissance Orbiter (MRO), Context Camera (CTX) |
+| Product | Context Camera Orthorectified Image Mosaic for Mars 2020 Terrain Relative Navigation, 6 m/px (`JEZ_ctx_B_soc_008_orthoMosaic_6m_Eqc_latTs0_lon0`) |
+| Authors / publisher | Fergason, R., Galuszka, D., Hare, T., Mayer, D., Redding, B. and Smith, E. (2020), USGS Astrogeology Science Center, for the NASA Mars 2020 project |
+| Served by | NASA Mars Trek (NASA/JPL), WMTS layer "MRO CTX, Jezero Mosaic, Controlled": https://trek.nasa.gov/tiles/Mars/EQ/JEZ_ctx_B_soc_008_orthoMosaic_6m_Eqc_latTs0_lon0/1.0.0/WMTSCapabilities.xml |
+| DOI | [10.5066/P9GV1ND3](https://doi.org/10.5066/P9GV1ND3) |
+| License | Public domain (NASA / USGS data; license not re-checked on the DOI page, confirm before submission) |
+| Accessed | 2026-11-14 |
+| Used for | Base imagery in the web app. A local backup of 930 tiles (zoom 0–13, ~5 m/px at the highest level, 28.6 MB) is in `data/tiles/`, downloaded by `preprocessing/download_trek_tiles.py`, in case Mars Trek is unavailable |
+
 ### Mars 2020 Terrain Relative Navigation HiRISE DTM, tile Jezero_C (validation only)
 
 | | |
@@ -62,7 +75,6 @@ and complete its URL, license and access date when it is added.
 
 | Dataset | Mission / instrument | Source | Planned use |
 |---|---|---|---|
-| MRO CTX, Jezero Mosaic, Controlled | MRO / CTX | NASA Mars Trek WMTS, https://trek.nasa.gov/mars/ | Base imagery |
 | MRO HiRISE, Jezero Mosaic, Controlled | MRO / HiRISE | NASA Mars Trek WMTS | High-resolution detail near the route |
 | Perseverance (Mars 2020) Path | Mars 2020 | NASA Mars Trek | Real rover traverse overlay |
 | "Jezero Crater Features and Landforms" bookmark | — | NASA Mars Trek | Candidate science stops |
