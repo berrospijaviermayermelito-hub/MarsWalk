@@ -218,3 +218,6 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Large raw downloads (GitHub limit: 100 MB per file)
+data/raw/
