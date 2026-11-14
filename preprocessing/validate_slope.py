@@ -25,7 +25,7 @@ from rasterio.enums import Resampling
 from rasterio.warp import reproject
 from rasterio.windows import from_bounds
 
-from build_cost_grid import DEFAULT_DEM, REPO, S_MAX_DEG, compute_slope_deg
+from build_cost_grid import DEFAULT_DEM, REPO, S_BLOCK_DEG, S_MAX_DEG, compute_slope_deg
 
 DEFAULT_HIRISE = (
     REPO
@@ -131,6 +131,17 @@ def main():
             "ctx_3x3_max_pct": round(float(blocked_ctx_60m.mean() * 100), 2),
             "hirise_blocked_missed_by_ctx_3x3_max_pct_of_hirise_blocked": round(
                 float((blocked_hi & ~blocked_ctx_60m).sum() / max(1, blocked_hi.sum()) * 100),
+                1,
+            ),
+        },
+        # What the cost grid actually does: block where the 3x3 max CTX slope
+        # exceeds the s_block margin.
+        "cost_grid_blocking_with_margin": {
+            "s_block_deg": S_BLOCK_DEG,
+            "blocked_pct": round(float((ctx_max3[ok] > S_BLOCK_DEG).mean() * 100), 2),
+            "hirise_over_s_max_caught_pct": round(
+                float((blocked_hi & (ctx_max3[ok] > S_BLOCK_DEG)).sum()
+                      / max(1, blocked_hi.sum()) * 100),
                 1,
             ),
         },

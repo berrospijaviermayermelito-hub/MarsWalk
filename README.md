@@ -91,11 +91,12 @@ data. Variables: `air_temp_c`, `ground_temp_c`, `pressure_pa`, `wind_speed_ms`.
 ## Route model
 
 Step cost between neighboring cells: `C = d · (1 + w_p · s / s_max + w_r · r)`, and the cell is
-blocked if `s > s_max` (`d` = distance, `s` = slope in degrees, `r` = roughness 0–1).
+blocked if `s > s_block` (`d` = distance, `s` = slope in degrees, `r` = roughness 0–1).
 
 | Parameter | Value | Source |
 |---|---|---|
 | `s_max` | 20° | NASA Artemis requirement: a suited astronaut must walk up/down/across a 20° slope ([NASA NTRS, Scoville](https://ntrs.nasa.gov/api/citations/20210026296/downloads/Scoville%20Final%20presentation%20-%20compressed.pptx.pdf)); Artemis traverses planned under 20° (Peña-Asensio et al., 2023, doi:10.1016/j.actaastro.2023.10.010) |
+| `s_block` | 15° | Safety margin below `s_max`: the 20 m CTX DEM underestimates short steep scarps. Blocking at 15° on the CTX slope catches ~88 % of the cells that an independent HiRISE 1 m DTM shows as steeper than 20° (see *Slope validation*) |
 | `walk_back_km` | 10 km | Maximum EVA walk-back distance from Apollo experience, evaluated in the JSC Walkback Test (Vos, Gernhardt & Lee, 2007, doi:10.4271/2007-01-3133) |
 | `vel_kmh` | 3.3 km/h | Walk-back speed used for Apollo 15 planning ([Bellcomm, "Apollo 15 EVA Capability"](https://www.nasa.gov/wp-content/uploads/static/history/alsj/19790073512_1979073512.pdf)) |
 | `w_p`, `w_r` | 1.0, 1.0 | Team empirical tuning (assumed values for the demo) |
@@ -114,13 +115,18 @@ landing site and the delta front. Results are in `data/slope_validation.json`.
 | Cells within 5° | 94.9 % |
 | Mean elevation difference | −0.15 m |
 | Same walkable/blocked class at 20° | 99.2 % of cells |
-| HiRISE cells steeper than 20° that the cost grid also blocks | about 61 % |
+| HiRISE cells steeper than 20° caught when blocking at 20° on CTX | 61 % |
+| HiRISE cells steeper than 20° caught when blocking at **15°** on CTX (used) | **88 %** |
 
-The CTX slopes are unbiased on average, but CTX smooths short, steep scarps: about 39 % of the
-cells that HiRISE shows as steeper than 20° are not blocked in the cost grid (their HiRISE slope
-is typically 23°, up to about 32°). A route can therefore cross a short slope steeper than the
-limit. Blocking at 15° on the CTX slope instead of 20° would catch 88 % of them and block 2.8 %
-of the area instead of 1.3 %.
+The CTX slopes are unbiased on average, but CTX smooths short, steep scarps: blocking at 20° on
+the CTX slope would miss about 39 % of the cells that HiRISE shows as steeper than 20° (their
+HiRISE slope is typically 23°, up to about 32°). The cost grid therefore blocks at **15°** on the
+CTX slope (`s_block`) while keeping the 20° NASA limit as the reference. This catches 88 % of
+those cells; about 12 % still pass, so the route is a planning aid, not a guarantee.
+
+Over the validated area this blocks 2.8 % of the terrain instead of 1.3 %. Over the whole grid it
+blocks 8.2 % instead of 3.0 %, mostly on the crater rim and the delta front; 99.8 % of the
+walkable terrain stays connected as a single area.
 
 ## Limitations
 

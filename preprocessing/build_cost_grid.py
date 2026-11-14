@@ -3,7 +3,7 @@
 
 Pipeline:
     DEM (GeoTIFF, 20 m/px) -> optional crop -> slope (deg) -> roughness (0-1)
-    -> block cells steeper than s_max -> downsample -> data/cost_grid.json
+    -> block cells steeper than s_block -> downsample -> data/cost_grid.json
     + data/heights.json
 
 Input DEM (not committed, see DATA_SOURCES.md):
@@ -35,6 +35,11 @@ DEFAULT_DEM = (
 
 # Route parameters (sources in README.md / DATA_SOURCES.md).
 S_MAX_DEG = 20.0  # max walkable slope for a suited astronaut (NASA Artemis reference)
+# Cells are blocked above S_BLOCK_DEG on the CTX slope, not S_MAX_DEG: the 20 m
+# CTX DEM underestimates short steep scarps. Against an independent HiRISE 1 m
+# DTM (preprocessing/validate_slope.py), blocking at 20 deg caught ~61 % of the
+# cells steeper than 20 deg; blocking at 15 deg catches ~88 %.
+S_BLOCK_DEG = 15.0
 W_SLOPE = 1.0  # w_p: slope weight (team empirical tuning)
 W_ROUGH = 1.0  # w_r: roughness weight (team empirical tuning)
 
@@ -91,7 +96,7 @@ def build(elev, valid, dx_m, dy_m, factor):
 
     # Cost multiplier per cell: C = d * cost, cost = 1 + w_p*s/s_max + w_r*r.
     cost = 1.0 + W_SLOPE * s_ds / S_MAX_DEG + W_ROUGH * r_ds
-    blocked = (s_ds > S_MAX_DEG) | ~v_ds
+    blocked = (s_ds > S_BLOCK_DEG) | ~v_ds
     cost = np.where(blocked, -1.0, cost)
     return h_ds, s_ds, r_ds, cost, rough_scale
 
@@ -114,6 +119,10 @@ def self_test():
     steep = x * math.tan(math.radians(25.0))
     _, s_ds, _, cost, _ = build(steep + 0.0 * y, np.ones((n, n), bool), px, px, 3)
     assert np.allclose(s_ds, 25.0, atol=1e-6) and (cost == -1).all()
+    # 17 deg is under s_max but over the s_block margin: must be blocked.
+    mid = x * math.tan(math.radians(17.0))
+    _, _, _, cost, _ = build(mid + 0.0 * y, np.ones((n, n), bool), px, px, 3)
+    assert (cost == -1).all()
     print("self-test OK")
 
 
@@ -218,11 +227,15 @@ def main():
         "meta": {
             **meta,
             "s_max_deg": S_MAX_DEG,
+            "s_block_deg": S_BLOCK_DEG,
+            "s_block_note": "cells are blocked when the CTX slope exceeds s_block_deg, "
+            "a margin below the s_max_deg limit because the 20 m CTX DEM underestimates "
+            "short steep scarps (validated against HiRISE 1 m, see slope_validation.json)",
             "w_slope": W_SLOPE,
             "w_rough": W_ROUGH,
             "cost_formula": "step cost = distance * cost; "
             "cost = 1 + w_slope * slope_deg / s_max_deg + w_rough * roughness; "
-            "cost = -1 means blocked (slope_deg > s_max_deg or no data)",
+            "cost = -1 means blocked (slope_deg > s_block_deg or no data)",
             "slope_note": f"slope computed at {px_x:g} m/px, then block maximum "
             f"over {factor}x{factor} pixels",
             "roughness_note": f"RMS height residual in a {ROUGH_WINDOW}x{ROUGH_WINDOW} "
@@ -271,7 +284,7 @@ def main():
         fig, axes = plt.subplots(1, 3, figsize=(18, 6), constrained_layout=True)
         panels = (
             (heights, "Elevation (m)", "terrain", None, None),
-            (slope, "Slope (deg), red = blocked", "viridis", 0, S_MAX_DEG),
+            (slope, "Slope (deg), red = blocked", "viridis", 0, S_BLOCK_DEG),
             (np.where(blocked, np.nan, cost), "Cost multiplier", "magma", None, None),
         )
         for ax, (data, title, cmap, vmin, vmax) in zip(axes, panels):
