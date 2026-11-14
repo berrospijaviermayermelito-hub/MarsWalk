@@ -30,6 +30,8 @@ NASA data ──► preprocessing/ (Python) ──► data/*.json ──► web/
 | `preprocessing/build_cost_grid.py` | DEM → slope → roughness → cost grid + heights |
 | `data/cost_grid.json` | Slope, roughness and traversal cost per cell (504 × 532 cells, ~60 m) |
 | `data/heights.json` | Elevation per cell, for 3D relief and elevation profiles |
+| `preprocessing/build_meda_summary.py` | MEDA weather CSVs → typical conditions by season and hour |
+| `data/meda_summary.json` | Typical air/ground temperature, pressure and wind per season and local hour |
 | `data/cost_grid_preview.png` | Quick-look image of elevation, slope and cost |
 | `web/` | CesiumJS app (in progress) |
 | `DATA_SOURCES.md` | Every dataset and reference used, with URL and license/DOI |
@@ -58,6 +60,15 @@ Check the slope math on a synthetic tilted plane:
 python preprocessing/build_cost_grid.py --self-test
 ```
 
+## Rebuild the weather summary
+
+Downloads about 1.5 GB from the NASA PDS Atmospheres Node (takes several minutes) and keeps only
+small hourly summaries in `data/raw/meda_hourly/`:
+
+```bash
+python preprocessing/build_meda_summary.py
+```
+
 ## Data format
 
 Both JSON files share a `meta` block: `rows`, `cols`, `bounds_deg` (west/south/east/north,
@@ -69,6 +80,11 @@ row 0 is the **northern** edge and column 0 is the western edge, so
 - `cost_grid.json`: `slope_deg`, `roughness` (0–1) and `cost`.
   `cost = -1` means the cell is blocked.
 - `heights.json`: `heights_m`, meters relative to the Mars areoid (MOLA datum).
+
+`meda_summary.json` has 12 `ls_bins` of 30° of solar longitude (Ls 0° = northern spring equinox;
+Jezero is in the northern hemisphere). Each bin has `hourly.<variable>`, a list of 24 entries
+indexed by local true solar hour, each `{median, p10, p90, n}` or `null` when there is not enough
+data. Variables: `air_temp_c`, `ground_temp_c`, `pressure_pa`, `wind_speed_ms`.
 
 ## Route model
 
@@ -95,8 +111,12 @@ blocked if `s > s_max` (`d` = distance, `s` = slope in degrees, `r` = roughness 
 - **Projection.** The DEM is equirectangular with standard parallel 0°, so its pixels are 20 m
   wide only at the equator. The script corrects east–west distances by cos(latitude)
   (~5 % at Jezero) before computing slope.
-- **No live weather exists for Mars.** Conditions will be shown as typical values for the season
-  and time of sol, not as a forecast.
+- **No live weather exists for Mars.** Conditions are typical values measured by Perseverance
+  MEDA for the season and time of sol, not a forecast. They come from one location on the crater
+  floor and a sample of sols (every 12th sol).
+- **Wind** data are sparse: the MEDA wind sensor was progressively damaged by wind-blown sand from
+  early 2022. Treat wind values with caution.
+- **Dust and radiation** are not in the weather summary yet.
 
 ## Data and credits
 
