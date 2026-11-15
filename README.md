@@ -15,7 +15,19 @@ One screen answers three questions for a human explorer:
   Perseverance photo.
 
 > Status: the data layer and the web app are integrated: real A* route, blocked terrain, elevation
-> profile, typical MEDA conditions, radiation context, stop briefings and a guided EVA mode.
+> profile, typical MEDA conditions, radiation context, stop briefings with NASA photos and a guided
+> EVA mode.
+
+## Links
+
+| | |
+|---|---|
+| **Live app** (GitHub Pages, no login) | https://berrospijaviermayermelito-hub.github.io/MarsWalk/web/ |
+| **Repository** | https://github.com/berrospijaviermayermelito-hub/MarsWalk |
+| **Documentation** | This README, [DATA_SOURCES.md](DATA_SOURCES.md) and [docs/TEAM_RULES.md](docs/TEAM_RULES.md) |
+| **Demo** | To be added before submission |
+
+The live app is published from the `main` branch. Use *Run locally* below only for development.
 
 ## Run locally
 
