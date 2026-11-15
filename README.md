@@ -70,6 +70,9 @@ NASA data ──► preprocessing/ (Python) ──► data/*.json ──► web/
 | `data/overlays/` | `slope.png`, `blocked.png` and `overlays.json` (bounds and legend) |
 | `preprocessing/build_candidate_sites.py` | Collects candidate habitat and science stops from NASA Mars Trek and checks them against the cost grid |
 | `data/candidate_sites.json` | 17 NASA Mars Trek points of interest with coordinates, official description and walkability |
+| `preprocessing/build_traverse.py` | Perseverance's real traverse: map layer and check against the cost grid |
+| `data/perseverance_traverse.geojson` | Perseverance's drives (NASA), one line per drive with its sol |
+| `data/traverse_validation.json`, `data/traverse_preview.png` | How the cost grid classifies the terrain the rover crossed |
 | `data/cost_grid_preview.png` | Quick-look image of elevation, slope and cost |
 | `web/` | Leaflet web app (frontend and route teams) |
 | `docs/TEAM_RULES.md` | Team rules, frozen decisions, parameters and open items |
@@ -298,6 +301,24 @@ those cells; about 12 % still pass, so the route is a planning aid, not a guaran
 Over the validated area this blocks 2.8 % of the terrain instead of 1.3 %. Over the whole grid it
 blocks 8.2 % instead of 3.0 %, mostly on the crater rim and the delta front; 99.8 % of the
 walkable terrain stays connected as a single area.
+
+## Check against Perseverance's real traverse
+
+`preprocessing/build_traverse.py` samples Perseverance's 332 drives (NASA traverse data, sols
+14–1176, 27.2 km) every 10 m and looks up each point in the cost grid. Results are in
+`data/traverse_validation.json`; `data/traverse_preview.png` shows the traverse over the blocked
+terrain.
+
+| Check | Result |
+|---|---|
+| Traverse length on walkable cells | 98.3 % |
+| Traverse length on blocked cells | 1.7 % (8 of 434 cells crossed) |
+| Grid slope along the traverse | median 4.1°, 90th percentile 10.0° |
+
+The few blocked cells are where the rover climbed the delta front (sols 536–538 and 700–709, next
+to stop B) and a slope in the west (sols 1145–1159). A rover is not a walking astronaut, so this
+does not prove the terrain is safe to walk; it shows that the grid does not block the terrain NASA
+chose to drive through, except on its steepest parts.
 
 ## Limitations
 

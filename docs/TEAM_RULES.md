@@ -69,6 +69,8 @@ Planned EVA (A* on the cost grid, from `data/stops.json`): habitat → A → B �
 | `stops.json` | Habitat and stops A–C: name, coordinates, NASA briefing, source URL, sols for photos | Map, briefings |
 | `meda_summary.json` | Typical conditions: 12 `ls_bins` × 24 hours | Conditions panel |
 | `radiation_context.json` | Reference dose rate and caveats | Radiation context |
+| `perseverance_traverse.geojson` | Perseverance's real drives (NASA), GeoJSON lines with sol | Optional map layer (`L.geoJSON`) |
+| `traverse_validation.json`, `traverse_preview.png` | Grid check against the rover traverse | README, pitch |
 | `candidate_sites.json` | All 17 NASA Mars Trek points checked against the grid | Reference only |
 | `tiles/` | Offline copy of the CTX Jezero tiles | Fallback if Mars Trek is down |
 
