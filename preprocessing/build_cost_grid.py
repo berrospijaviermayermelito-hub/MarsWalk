@@ -25,6 +25,8 @@ from pathlib import Path
 
 import numpy as np
 
+from ai_disclosure import AI_ASSISTANCE
+
 REPO = Path(__file__).resolve().parent.parent
 DEFAULT_DEM = (
     REPO
@@ -202,6 +204,7 @@ def main():
     south = math.degrees((transform.f - rows * factor * px_y) / radius)
 
     meta = {
+        "ai_assistance": AI_ASSISTANCE,
         "generated_utc": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
         "source_dem": dem_name,
         "source_doi": "10.5066/P906QQT8",

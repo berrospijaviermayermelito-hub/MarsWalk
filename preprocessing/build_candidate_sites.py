@@ -23,6 +23,8 @@ import urllib.request
 from datetime import datetime, timezone
 from pathlib import Path
 
+from ai_disclosure import AI_ASSISTANCE
+
 REPO = Path(__file__).resolve().parent.parent
 SERVICE = "https://trek.nasa.gov/mars/trekarcgis/rest/services/{}/MapServer/0/query"
 LAYERS = {
@@ -35,6 +37,7 @@ LAYERS = {
 # (NASA Science, "Perseverance's Route to the Delta").
 TRAVERSE = "https://trek.nasa.gov/mars/trekarcgis/rest/services/Perseverance_Traverse_Path/MapServer/0"
 WALK_BACK_KM = 10.0
+NEAR_M = 150.0
 
 # Extra facts from NASA pages, quoted verbatim, keyed by Mars Trek point name.
 NASA_NOTES = {
@@ -111,6 +114,19 @@ def main():
     for s in sites:
         if s["name"] in NASA_NOTES:
             s["nasa_notes"] = NASA_NOTES[s["name"]]
+
+    # Sols when Perseverance drove within NEAR_M of each site (to find its photos
+    # in the raw image gallery with the Sol filter).
+    rad = math.pi / 180
+    def dist_m(lon1, lat1, lon2, lat2):
+        x = (lon1 - lon2) * rad * math.cos(lat2 * rad) * radius
+        y = (lat1 - lat2) * rad * radius
+        return math.hypot(x, y)
+    for s in sites:
+        near = sorted({f["attributes"]["sol"] for f in drives
+                       if min(dist_m(v[0], v[1], s["lon"], s["lat"])
+                              for path in f["geometry"]["paths"] for v in path) <= NEAR_M})
+        s["perseverance_drive_sols_within_150m"] = near
     rad = math.pi / 180
     for s in sites:
         c = (math.sin(hab["lat"] * rad) * math.sin(s["lat"] * rad)
@@ -121,6 +137,7 @@ def main():
 
     out = {
         "meta": {
+            "ai_assistance": AI_ASSISTANCE,
             "generated_utc": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
             "description": "Candidate habitat and science stops from NASA Mars Trek "
             "Jezero bookmarks, checked against the MarsWalk cost grid. Candidates only: "
@@ -138,6 +155,9 @@ def main():
             "walk_back_km": WALK_BACK_KM,
             "distance_note": "straight-line distance on the Mars sphere; the walking "
             "route is longer (see web/route.js)",
+            "sols_note": "perseverance_drive_sols_within_150m lists the sols of the drives "
+            "in NASA's traverse data that passed within 150 m of the site; use them with the "
+            "Sol filter of https://mars.nasa.gov/mars2020/multimedia/raw-images/",
         },
         "sites": sites,
     }

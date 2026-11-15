@@ -236,10 +236,10 @@ blocked if `s > s_block` (`d` = distance, `s` = slope in degrees, `r` = roughnes
 
 | Parameter | Value | Source |
 |---|---|---|
-| `s_max` | 20° | NASA Artemis requirement: a suited astronaut must walk up/down/across a 20° slope ([NASA NTRS, Scoville](https://ntrs.nasa.gov/api/citations/20210026296/downloads/Scoville%20Final%20presentation%20-%20compressed.pptx.pdf)); Artemis traverses planned under 20° (Peña-Asensio et al., 2023, doi:10.1016/j.actaastro.2023.10.010) |
-| `s_block` | 15° | Safety margin below `s_max`: the 20 m CTX DEM underestimates short steep scarps. Blocking at 15° on the CTX slope catches ~88 % of the cells that an independent HiRISE 1 m DTM shows as steeper than 20° (see *Slope validation*) |
-| `walk_back_km` | 10 km | Maximum EVA walk-back distance from Apollo experience, evaluated in the JSC Walkback Test (Vos, Gernhardt & Lee, 2007, doi:10.4271/2007-01-3133) |
-| `vel_kmh` | 3.3 km/h | Walk-back speed used for Apollo 15 planning ([Bellcomm, "Apollo 15 EVA Capability"](https://www.nasa.gov/wp-content/uploads/static/history/alsj/19790073512_1979073512.pdf)) |
+| `s_max` | 20° | NASA requirement HLS-S-R-0071, quoted in Scoville (NASA NTRS 20210026296): "Astronaut in suit must be able to walk up, down, across a 20-degree slope." |
+| `s_block` | 15° | Peña-Asensio et al. (2023) adopt "<15°, which is conservative because 20° is considered a permissible limit". Our HiRISE check also shows that the 20 m CTX DEM underestimates short steep scarps: blocking at 15° on the CTX slope catches 88 % of the cells steeper than 20° (see *Slope validation*) |
+| `walk_back_km` | 10 km | NASA JSC Walkback Test report (Vos, Gernhardt & Lee, 2007, NTRS 20070016007): "based on Apollo program experience, ... 10 kilometers (6.2 mi) will be the maximum EVA excursion distance from the lander or habitat" |
+| `vel_kmh` | 3.3 km/h | Bellcomm, "Apollo 15 EVA Capability" (provided by the team; **source not yet verified**, see DATA_SOURCES.md) |
 | `w_p`, `w_r` | 1.0, 1.0 | Team empirical tuning (assumed values for the demo) |
 
 ## Slope validation
@@ -299,6 +299,21 @@ walkable terrain stays connected as a single area.
   sand" that "was considered too sandy and rocky for a safe landing". Sand is not resolved by the
   20 m DEM, so the cost grid can mark sandy terrain as walkable.
 - **Dust** is not in the weather summary yet.
+
+## Use of AI
+
+NASA Space Apps asks teams to state where and how AI tools were used. MarsWalk used Claude
+(Anthropic), an AI assistant, as follows:
+
+- **Code:** the preprocessing scripts in `preprocessing/` and the code examples in this README were
+  written with Claude's help and reviewed and run by the team.
+- **Data:** every file in `data/` is produced by those scripts from NASA and USGS sources, or
+  quotes a NASA source (`radiation_context.json`). The AI did not generate any data values. Each
+  data file states this in its metadata field `ai_assistance`.
+- **Text:** this README and DATA_SOURCES.md were drafted with Claude's help. Every fact in them is
+  checked against the source listed in DATA_SOURCES.md.
+- **Images, video and audio:** none were generated with AI.
+- **Web app (`web/`):** AI use to be stated by its authors before submission.
 
 ## Data and credits
 

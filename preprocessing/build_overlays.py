@@ -23,6 +23,8 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
 
+from ai_disclosure import AI_ASSISTANCE
+
 REPO = Path(__file__).resolve().parent.parent
 
 BLOCKED_RGBA = (229, 57, 53, 200)  # red, mostly opaque
@@ -52,6 +54,7 @@ def main():
 
     b = m["bounds_deg"]
     info = {
+        "ai_assistance": AI_ASSISTANCE,
         "source": "data/cost_grid.json (built by preprocessing/build_cost_grid.py)",
         "bounds_deg": b,
         "leaflet_bounds": [[b["south"], b["west"]], [b["north"], b["east"]]],

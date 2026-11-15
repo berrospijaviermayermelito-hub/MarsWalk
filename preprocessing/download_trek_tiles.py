@@ -28,6 +28,8 @@ from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timezone
 from pathlib import Path
 
+from ai_disclosure import AI_ASSISTANCE
+
 REPO = Path(__file__).resolve().parent.parent
 TREK = "https://trek.nasa.gov/tiles/Mars/EQ"
 TILE_SET = "1.0.0/default/default028mm"
@@ -132,6 +134,7 @@ def main():
                 print(f"  {i}/{len(jobs)}")
 
     index = {
+        "ai_assistance": AI_ASSISTANCE,
         "layer": args.layer,
         "generated_utc": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
         "source": "NASA Mars Trek WMTS, https://trek.nasa.gov/mars/",

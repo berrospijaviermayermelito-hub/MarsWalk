@@ -27,6 +27,8 @@ from rasterio.windows import from_bounds
 
 from build_cost_grid import DEFAULT_DEM, REPO, S_BLOCK_DEG, S_MAX_DEG, compute_slope_deg
 
+from ai_disclosure import AI_ASSISTANCE
+
 DEFAULT_HIRISE = (
     REPO
     / "data"
@@ -91,6 +93,7 @@ def main():
     blocked_ctx_60m = ctx_max3[ok] > S_MAX_DEG
     both = int((blocked_ctx & blocked_hi).sum())
     result = {
+        "ai_assistance": AI_ASSISTANCE,
         "generated_utc": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
         "description": "Slope from the CTX DEM (used by the cost grid) compared "
         "with slope from an independent HiRISE DTM averaged to the same 20 m grid.",

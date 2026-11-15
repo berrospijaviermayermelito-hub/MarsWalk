@@ -34,6 +34,8 @@ from pathlib import Path
 
 import numpy as np
 
+from ai_disclosure import AI_ASSISTANCE
+
 REPO = Path(__file__).resolve().parent.parent
 BASE = "https://atmos.nmsu.edu/PDS/data/PDS4/Mars2020/mars2020_meda"
 SOL_GROUPS = [(0, 89), (90, 179), (180, 299)] + [
@@ -260,6 +262,7 @@ def main():
 
     out = {
         "meta": {
+            "ai_assistance": AI_ASSISTANCE,
             "generated_utc": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
             "description": "Typical conditions at Jezero crater measured by "
             "Perseverance MEDA, by season (solar longitude Ls) and local true "
