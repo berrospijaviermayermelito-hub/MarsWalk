@@ -9,8 +9,8 @@ name center 18.41° N, 77.69° E), where NASA's Perseverance rover landed on Feb
 One screen answers three questions for a human explorer:
 
 - **Where do I walk?** An automatic safest route (A\*) that avoids steep and rough terrain.
-- **When do I go?** A traffic-light panel of typical conditions (temperature, dust, radiation)
-  for the chosen season and time of sol.
+- **When do I go?** Typical conditions measured by Perseverance (temperature, pressure, wind)
+  for the chosen season and time of sol, plus radiation context.
 - **Why do I go?** Science stops (geology, minerals) with a short briefing and a real
   Perseverance photo.
 
@@ -23,7 +23,7 @@ Static site, no backend. Heavy NASA data is processed once in Python and saved a
 files that the browser loads directly.
 
 ```
-NASA data ──► preprocessing/ (Python) ──► data/*.json ──► web/ (CesiumJS app)
+NASA data ──► preprocessing/ (Python) ──► data/*.json ──► web/ (Leaflet app)
 ```
 
 | Path | Content |
@@ -37,13 +37,15 @@ NASA data ──► preprocessing/ (Python) ──► data/*.json ──► web/
 | `data/slope_validation.json` | Result of that comparison |
 | `preprocessing/download_trek_tiles.py` | Downloads a local backup of NASA Mars Trek map tiles |
 | `data/tiles/` | Backup of the CTX Jezero mosaic tiles (zoom 0–13), same folder layout as Mars Trek; `index.json` lists the URL templates and tile ranges |
+| `data/stops.json` | Habitat and science stops chosen by the team, with NASA briefings and source URLs |
 | `data/radiation_context.json` | Reference surface radiation dose rate (Curiosity RAD, Gale crater) for EVA dose context |
 | `preprocessing/build_overlays.py` | Renders the cost grid as transparent PNG overlays for the map |
 | `data/overlays/` | `slope.png`, `blocked.png` and `overlays.json` (bounds and legend) |
 | `preprocessing/build_candidate_sites.py` | Collects candidate habitat and science stops from NASA Mars Trek and checks them against the cost grid |
 | `data/candidate_sites.json` | 17 NASA Mars Trek points of interest with coordinates, official description and walkability |
 | `data/cost_grid_preview.png` | Quick-look image of elevation, slope and cost |
-| `web/` | CesiumJS app (in progress) |
+| `web/` | Leaflet web app (frontend and route teams) |
+| `docs/TEAM_RULES.md` | Team rules, frozen decisions, parameters and open items |
 | `DATA_SOURCES.md` | Every dataset and reference used, with URL and license/DOI |
 
 ## Rebuild the terrain data
@@ -239,7 +241,8 @@ blocked if `s > s_block` (`d` = distance, `s` = slope in degrees, `r` = roughnes
 | `s_max` | 20° | NASA requirement HLS-S-R-0071, quoted in Scoville (NASA NTRS 20210026296): "Astronaut in suit must be able to walk up, down, across a 20-degree slope." |
 | `s_block` | 15° | Peña-Asensio et al. (2023) adopt "<15°, which is conservative because 20° is considered a permissible limit". Our HiRISE check also shows that the 20 m CTX DEM underestimates short steep scarps: blocking at 15° on the CTX slope catches 88 % of the cells steeper than 20° (see *Slope validation*) |
 | `walk_back_km` | 10 km | NASA JSC Walkback Test report (Vos, Gernhardt & Lee, 2007, NTRS 20070016007): "based on Apollo program experience, ... 10 kilometers (6.2 mi) will be the maximum EVA excursion distance from the lander or habitat" |
-| `vel_kmh` | 3.3 km/h | Bellcomm, "Apollo 15 EVA Capability" (provided by the team; **source not yet verified**, see DATA_SOURCES.md) |
+| `vel_kmh` | 3.4 km/h | Cavagna, Willems & Heglund (1998), "Walking on Mars", *Nature* 393, 636, doi:10.1038/31374: "The optimal walking speed on Mars will be 3.4 km h-1 (down from 5.5 km h-1 on Earth)". Measured without a spacesuit in reduced-gravity flights |
+| `eva_limit_h` | 6 h | Scoville (NASA NTRS 20210026296), slide 4: "Nominal EVA excursion is 6 hours +/- 2 hours" (Artemis, Moon) |
 | `w_p`, `w_r` | 1.0, 1.0 | Team empirical tuning (assumed values for the demo) |
 
 ## Slope validation
@@ -271,8 +274,8 @@ walkable terrain stays connected as a single area.
 
 ## Limitations
 
-- **Lunar-derived parameters.** The slope, distance and speed limits come from lunar experience
-  and studies. Surface gravity is 3.73 m/s² on Mars versus 1.62 m/s² on the Moon (NASA NSSDC
+- **Lunar-derived parameters.** The slope, distance and EVA-duration limits come from lunar
+  experience and studies; the walking speed was measured without a spacesuit. Surface gravity is 3.73 m/s² on Mars versus 1.62 m/s² on the Moon (NASA NSSDC
   fact sheets), and future suits will differ, so these are reference values, not Mars mission
   requirements.
 - **Resolution.** Slope is computed on the 20 m/px CTX DEM and each ~60 m cell keeps the
@@ -298,7 +301,7 @@ walkable terrain stays connected as a single area.
 - **Sand.** NASA describes the Séítah area, next to the landing site, as "an exposure of rock and
   sand" that "was considered too sandy and rocky for a safe landing". Sand is not resolved by the
   20 m DEM, so the cost grid can mark sandy terrain as walkable.
-- **Dust** is not in the weather summary yet.
+- **Dust** is not shown: we have no sourced dust data.
 
 ## Use of AI
 

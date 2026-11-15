@@ -39,6 +39,15 @@ TRAVERSE = "https://trek.nasa.gov/mars/trekarcgis/rest/services/Perseverance_Tra
 WALK_BACK_KM = 10.0
 NEAR_M = 150.0
 
+# Stops chosen by the team (docs/TEAM_RULES.md): id -> (Mars Trek point, display
+# name taken from the NASA text, mineral/feature, instrument, extra fields).
+SELECTED_STOPS = {
+    "A": ("POI 4", "S\u00e9\u00edtah", "Mostly olivine", "Perseverance",
+          {"mineral_source_url": "https://science.nasa.gov/blog/perseverance-and-the-search-amongst-the-sand/"}),
+    "B": ("POI 5", "Delta front", "Ancient delta deposit", "Mastcam-Z", {}),
+    "C": ("POI 7", "Belva crater", "Delta fan deposit stratigraphy", "Mastcam-Z", {}),
+}
+
 # Extra facts from NASA pages, quoted verbatim, keyed by Mars Trek point name.
 NASA_NOTES = {
     "POI 4": {
@@ -161,6 +170,47 @@ def main():
         },
         "sites": sites,
     }
+    # Team decision: habitat at the landing site and three stops (see docs/TEAM_RULES.md).
+    by_name = {s["name"]: s for s in sites}
+    stops = []
+    for sid, (name, label, mineral, instrument, extra) in SELECTED_STOPS.items():
+        s = by_name[name]
+        stop = {
+            "id": sid,
+            "name": label,
+            "latlng": [s["lat"], s["lon"]],
+            "mineral": mineral,
+            "instrument": instrument,
+            "briefing": s["nasa_summary"],
+            "task": None,
+            "source_url": s["nasa_description_url"],
+            "mars_trek_point": name,
+            "perseverance_drive_sols_within_150m": s["perseverance_drive_sols_within_150m"],
+        }
+        stop.update(extra)
+        stops.append(stop)
+    stops_out = {
+        "meta": {
+            "ai_assistance": AI_ASSISTANCE,
+            "description": "Habitat and science stops chosen by the team from "
+            "data/candidate_sites.json. Names, briefings and facts are NASA text; "
+            "'task' is left empty for the science team.",
+            "source": "NASA Mars Trek points of interest and Perseverance traverse "
+            "(see DATA_SOURCES.md)",
+        },
+        "habitat": {
+            "name": "Habitat (Perseverance landing site)",
+            "latlng": [hab["lat"], hab["lon"]],
+            "note": f"Start of Perseverance's earliest drive (sol {hab['first_drive_sol']}) "
+            "in NASA's traverse data. NASA calls the landing site 'Octavia E. Butler'.",
+            "source_url": "https://science.nasa.gov/photojournal/perseverances-route-to-the-delta-2/",
+        },
+        "stops": stops,
+    }
+    spath = REPO / "data" / "stops.json"
+    spath.write_text(json.dumps(stops_out, indent=2, ensure_ascii=False) + "\n")
+    print(f"wrote {spath}")
+
     path = REPO / "data" / "candidate_sites.json"
     path.write_text(json.dumps(out, indent=2, ensure_ascii=False) + "\n")
     for s in sites:

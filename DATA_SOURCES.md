@@ -142,9 +142,10 @@ and complete its URL, usage terms and access date when it is added.
 | `s_max` = 20° | Scoville, "Artemis III EVA Mission Capability for de Gerlache-Shackleton Ridge", NASA NTRS 20210026296, slide 4 (citing NASA requirement HLS-S-R-0071): "Astronaut in suit must be able to walk up, down, across a 20-degree slope." https://ntrs.nasa.gov/citations/20210026296 | Verified 2026-11-15 |
 | `s_block` = 15° | Peña-Asensio et al. (2023), *Acta Astronautica*, doi:[10.1016/j.actaastro.2023.10.010](https://doi.org/10.1016/j.actaastro.2023.10.010): "We adopt thresholds for (1) encountered slopes being <15°, which is conservative because 20° is considered a permissible limit" (lunar traverses). Supports both the 20° limit and the 15° margin | Verified by a team member reading the paper, 2026-11-15 |
 | `walk_back_km` = 10 km | Vos, J. R., Gernhardt, M. L. and Lee, L. (2007), "The Walkback Test: A Study to Evaluate Suit and Life Support System Performance Requirements for a 10 Kilometer Traverse in a Planetary Suit", NASA Johnson Space Center, NTRS 20070016007: "It has been assumed, based on Apollo program experience, that 10 kilometers (6.2 mi) will be the maximum EVA excursion distance from the lander or habitat to ensure the crew member's safe return to the habitat in the event of a rover failure." https://ntrs.nasa.gov/citations/20070016007 | Verified 2026-11-15 |
-| `vel_kmh` = 3.3 km/h | Bellcomm, "Apollo 15 EVA Capability": https://www.nasa.gov/wp-content/uploads/static/history/alsj/19790073512_1979073512.pdf | **Not verified**: the link returns 404 to automated access; to be checked by the team |
+| `vel_kmh` = 3.4 km/h | Cavagna, G. A., Willems, P. A. and Heglund, N. C. (1998), "Walking on Mars", *Nature* 393, 636, doi:[10.1038/31374](https://doi.org/10.1038/31374). Abstract (NASA ADS, 1998Natur.393..636C): "The optimal walking speed on Mars will be 3.4 km h-1 (down from 5.5 km h-1 on Earth)". Measured onboard an aircraft flying reduced-gravity profiles, without a spacesuit | Abstract checked by a team member, 2026-11-15. Replaces the Bellcomm 3.3 km/h value, whose link returns 404 |
+| `eva_limit_h` = 6 h | Scoville, NASA NTRS 20210026296, slide 4: "Nominal EVA excursion is 6 hours +/- 2 hours" | Verified 2026-11-15 |
 
-All four references concern the Moon (Apollo or Artemis), not Mars.
+The slope, walk-back and EVA-duration references concern the Moon (Apollo or Artemis). The walking speed is for Mars gravity but without a spacesuit.
 
 ## Software
 
