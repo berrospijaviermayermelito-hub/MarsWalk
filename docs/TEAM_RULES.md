@@ -66,7 +66,8 @@ Planned EVA (A* on the cost grid, from `data/stops.json`): habitat → A → B �
 | `cost_grid.json` | Slope, roughness, cost per cell (`cost = -1` blocked) | `web/route.js` |
 | `heights.json` | Elevation per cell | `web/route.js`, elevation profile |
 | `overlays/` | `slope.png`, `blocked.png`, `overlays.json` (bounds) | Map overlays (`L.imageOverlay`) |
-| `stops.json` | Habitat and stops A–C: name, coordinates, NASA briefing, source URL, sols for photos | Map, briefings |
+| `stops.json` | Habitat and stops A–C: name, coordinates, NASA briefing, source URL, sols, NASA photo (`photo`) | Map, briefings |
+| `photos/` | One NASA photo per stop, referenced by `stops.json` | Briefing card |
 | `meda_summary.json` | Typical conditions: 12 `ls_bins` × 24 hours | Conditions panel |
 | `radiation_context.json` | Reference dose rate and caveats | Radiation context |
 | `perseverance_traverse.geojson` | Perseverance's real drives (NASA), GeoJSON lines with sol | Optional map layer (`L.geoJSON`) |
@@ -99,13 +100,14 @@ read these files; sample or illustrative values must not be shown.
 | Frontend | Spanish `docs/INFORME.md` removed, `docs/FRONTEND.md` translated | PR #6 |
 | Route | Default speed 3.4 km/h; README section and AI-use line for `web/route.js` | PR #7 |
 | Frontend | AI use of `web/` stated in the README "Use of AI" and in an `ai-assistance` meta tag | PR #10 |
+| Science + Data & GIS | One NASA photo per stop, verified against the NASA pages and the rover traverse (A PIA24816, B PIA24921, C PIA25889); `task` stays null (no NASA source gives one) | `data/stops.json`, `data/photos/` |
 | Data & GIS | GitHub Pages published from `main`: https://berrospijaviermayermelito-hub.github.io/MarsWalk/web/ | Repository settings |
 
 ### Still open
 
 | Owner | Item |
 |---|---|
-| Science | Confirm or add a `task` for each stop (sourced), and pick one Perseverance photo per stop with its image ID and exact credit. |
+| Frontend | Show each stop's photo (`stop.photo` in `data/stops.json`) with its title and credit in the briefing card. |
 | Science | The CRISM references for clays and carbonates (Goudge et al. 2015, Horgan et al. 2020) are not verified yet; verify them or do not use them. |
 | Pitch | 30-second video or ≤ 7 slides, in English or with English subtitles; AI images watermarked; no NASA logo. |
 | All | Before submitting: open every link (repository, prototype, documentation, demo) in a private browser window. |
