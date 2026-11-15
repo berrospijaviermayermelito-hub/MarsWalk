@@ -38,6 +38,8 @@ NASA data ──► preprocessing/ (Python) ──► data/*.json ──► web/
 | `preprocessing/download_trek_tiles.py` | Downloads a local backup of NASA Mars Trek map tiles |
 | `data/tiles/` | Backup of the CTX Jezero mosaic tiles (zoom 0–13), same folder layout as Mars Trek; `index.json` lists the URL templates and tile ranges |
 | `data/radiation_context.json` | Reference surface radiation dose rate (Curiosity RAD, Gale crater) for EVA dose context |
+| `preprocessing/build_overlays.py` | Renders the cost grid as transparent PNG overlays for the map |
+| `data/overlays/` | `slope.png`, `blocked.png` and `overlays.json` (bounds and legend) |
 | `data/cost_grid_preview.png` | Quick-look image of elevation, slope and cost |
 | `web/` | CesiumJS app (in progress) |
 | `DATA_SOURCES.md` | Every dataset and reference used, with URL and license/DOI |
@@ -100,7 +102,7 @@ backup: data/tiles/JEZ_ctx_B_soc_008_orthoMosaic_6m_Eqc_latTs0_lon0/1.0.0/defaul
 ```
 
 Tiling scheme: geographic (equirectangular), 256 px tiles, level 0 is 2 × 1 tiles covering the
-whole planet (in CesiumJS: `GeographicTilingScheme` with 2 × 1 root tiles on a Mars ellipsoid).
+whole planet (in Leaflet: `L.CRS.EPSG4326`; in CesiumJS: `GeographicTilingScheme` with 2 × 1 root tiles on a Mars ellipsoid).
 The backup only covers the Jezero work area; outside it the app needs the live service.
 
 Rebuild the backup:
@@ -108,6 +110,98 @@ Rebuild the backup:
 ```bash
 python preprocessing/download_trek_tiles.py
 ```
+
+## Frontend integration (Leaflet)
+
+How to use the data layer from the Leaflet map in `web/`. All paths are relative to `web/`, so
+the site must be published from the repository root (see *How it works*).
+
+### 1. Base tiles: do not use `tms: true`
+
+Mars Trek WMTS tiles count rows from the **north** (`TopLeftCorner -180 90` in the
+capabilities), which is Leaflet's default. With `tms: true` Leaflet requests the mirrored row in
+the southern hemisphere: for Jezero at zoom 11, row 1235 instead of 812, which returns 404 for
+the Jezero layer and wrong terrain for global layers.
+
+```js
+const map = L.map("map", { crs: L.CRS.EPSG4326, center: [18.44, 77.45], zoom: 11, maxZoom: 15 });
+
+// Global context (Viking color mosaic), low resolution.
+L.tileLayer(
+  "https://trek.nasa.gov/tiles/Mars/EQ/Mars_Viking_MDIM21_ClrMosaic_global_232m/1.0.0/default/default028mm/{z}/{y}/{x}.jpg",
+  { maxNativeZoom: 7, attribution: "NASA/JPL/USGS, Mars Trek" }
+).addTo(map);
+
+// Jezero CTX mosaic (6 m/px), with the local backup as fallback.
+const CTX = "JEZ_ctx_B_soc_008_orthoMosaic_6m_Eqc_latTs0_lon0/1.0.0/default/default028mm/{z}/{y}/{x}.png";
+const ctxLayer = L.tileLayer("https://trek.nasa.gov/tiles/Mars/EQ/" + CTX, {
+  bounds: [[18.2110274, 77.1604655], [18.7211945, 77.6991776]],
+  maxNativeZoom: 13,
+  attribution: "NASA/JPL/USGS, MRO CTX",
+}).addTo(map);
+ctxLayer.on("tileerror", (e) => {
+  // Mars Trek unavailable: load the same tile from the repository copy (only once per tile).
+  if (e.tile.dataset.fallback) return;
+  e.tile.dataset.fallback = "1";
+  const { x, y, z } = e.coords;
+  e.tile.src = "../data/tiles/" + CTX.replace("{z}", z).replace("{y}", y).replace("{x}", x);
+});
+```
+
+Leaflet's `L.CRS.EPSG4326` uses 2 × 1 tiles of 256 px at zoom 0, the same scheme as Mars Trek, so
+`{z}/{y}/{x}` map directly to `TileMatrix/TileRow/TileCol`.
+
+### 2. Distances and circles: Leaflet assumes Earth
+
+`L.circle(center, radiusMeters)` converts meters to degrees with **Earth's** radius
+(6,371 km, hard-coded in Leaflet 1.9). A 10 km walk-back circle drawn that way covers only
+about 5.3 km on Mars. Draw it as a polygon with the Mars radius used by the data
+(`body_radius_m` = 3,396,190 m), and use the same radius for any distance calculation:
+
+```js
+const MARS_R_M = 3396190;
+
+function marsCircle(center, radiusM, options) {
+  const [lat, lon] = center.map((v) => (v * Math.PI) / 180);
+  const d = radiusM / MARS_R_M;
+  const pts = [];
+  for (let i = 0; i <= 128; i++) {
+    const b = (2 * Math.PI * i) / 128;
+    const lat2 = Math.asin(Math.sin(lat) * Math.cos(d) + Math.cos(lat) * Math.sin(d) * Math.cos(b));
+    const lon2 = lon + Math.atan2(Math.sin(b) * Math.sin(d) * Math.cos(lat), Math.cos(d) - Math.sin(lat) * Math.sin(lat2));
+    pts.push([(lat2 * 180) / Math.PI, (lon2 * 180) / Math.PI]);
+  }
+  return L.polygon(pts, options);
+}
+
+marsCircle([18.4386, 77.4508], 10000, { color: "#ffb74d", fill: false, dashArray: "6 4" }).addTo(map);
+```
+
+### 3. Slope and blocked-terrain overlays
+
+`data/overlays/` has the cost grid rendered as transparent PNGs (one pixel per cell), ready for
+`L.imageOverlay`. Bounds and legend are in `data/overlays/overlays.json`.
+
+```js
+const ov = await fetch("../data/overlays/overlays.json").then((r) => r.json());
+const slopeLayer = L.imageOverlay("../data/overlays/slope.png", ov.leaflet_bounds, { opacity: 0.8 });
+const blockedLayer = L.imageOverlay("../data/overlays/blocked.png", ov.leaflet_bounds);
+blockedLayer.addTo(map);
+// Keep cell edges sharp when zoomed in.
+blockedLayer.getElement().style.imageRendering = "pixelated";
+```
+
+Red means blocked (`cost = -1`, slope above `s_block_deg` = 15° or no data). Rebuild after any
+change to the cost grid with `python preprocessing/build_overlays.py`.
+
+### 4. Route, conditions and radiation
+
+- **Route:** `web/route.js` (branch `ruta-astar`) loads `cost_grid.json` and `heights.json` with
+  `MarsRoute.loadPlanner("../data")` and returns the path, distance, time and elevation profile.
+- **Conditions:** pick the `ls_bins` entry for the season and index `hourly.<variable>` by local
+  hour in `data/meda_summary.json`. Show `null` as "no data" (wind is missing in most seasons).
+- **Radiation:** show `absorbed_dose_rate_ugy_per_hour × EVA duration` from
+  `data/radiation_context.json` as context, with the note that it was measured in Gale crater.
 
 ## Data format
 
