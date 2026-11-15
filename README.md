@@ -14,8 +14,8 @@ One screen answers three questions for a human explorer:
 - **Why do I go?** Science stops (geology, minerals) with a short briefing and a real
   Perseverance photo.
 
-> Status: work in progress. The data layer is done (terrain cost grid, heights, slope validation,
-> typical weather and offline map tiles); the web app is under construction.
+> Status: the data layer and the web app are integrated: real A* route, blocked terrain, elevation
+> profile, typical MEDA conditions, radiation context, stop briefings and a guided EVA mode.
 
 ## Run locally
 
@@ -32,17 +32,19 @@ work: the browser blocks loading the files in `data/`.
 
 ```
 web/              frontend (Leaflet + Chart.js, plain JavaScript)
-  config.js       parameters, layers and data sources shown in the app
-  map.js          map, Mars CRS, layers, route drawing, safety checks
-  briefing.js     route summary, conditions, stop briefings, EVA mode
+  index.html      page layout
+  style.css       dark theme
+  config.js       route parameters (with sources), map layers, data sources shown in the app
+  ui.js           shared helpers: status, errors, JSON loading
+  map.js          map, Mars CRS, layers, blocked terrain, route drawing and safety checks
+  briefing.js     route summary, typical conditions, radiation context, stop briefings, EVA mode
   profile.js      elevation profile
-  app.js          boot sequence
-  ui.js           shared UI helpers
+  app.js          boot sequence: loads data/, plans the EVA with route.js, draws it
   route.js        A* route planner (route team)
-  sample-data.js  placeholder values, to be removed (see docs/TEAM_RULES.md)
-  tiles/          local fallback copy of CTX tiles (frontend)
-  tools/          fetch_fallback_tiles.py
 ```
+
+The app reads only the team files in `data/` (no sample values). If a file is missing it shows
+an error. If Mars Trek is unreachable, CTX tiles are loaded from `data/tiles/`.
 
 ## How it works
 

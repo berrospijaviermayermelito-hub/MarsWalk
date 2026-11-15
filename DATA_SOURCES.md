@@ -51,9 +51,6 @@ Usage terms: JPL image and data use policy, https://www.jpl.nasa.gov/imagepolicy
 | MGS MOLA, Global Color Hillshade | `Mars_MGS_MOLA_ClrShade_merge_global_463m` | Mars Global Surveyor / MOLA |
 | MO THEMIS-IR Night, Global Mosaic | `THEMIS_NightIR_ControlledMosaics_100m_v2_oct2018` | Mars Odyssey / THEMIS |
 
-`web/tiles/ctx/` is a second local copy of the CTX Jezero tiles, made by the frontend with
-`web/tools/fetch_fallback_tiles.py` (same source as `data/tiles/`).
-
 ### Mars 2020 Terrain Relative Navigation HiRISE DTM, tile Jezero_C (validation only)
 
 | | |

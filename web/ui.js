@@ -32,14 +32,14 @@
   function clearError(key) { delete errors[key]; renderErrors(); }
 
   /**
-   * Fetch a team JSON file. Resolves to { data, sample:false } or, if the file
-   * is missing / unreachable (e.g. opened via file://), to { data: fallback, sample:true }.
+   * Fetch a team JSON file. Always resolves: { ok: true, data } or, if the file
+   * is missing / unreachable (e.g. opened via file://), { ok: false, error }.
    */
-  function loadJSON(url, fallback) {
-    return fetch(url, { cache: "no-cache" })
-      .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
-      .then(function (data) { return { data: data, sample: false }; })
-      .catch(function () { return { data: fallback, sample: true }; });
+  function loadJSON(url) {
+    return fetch(url)
+      .then(function (r) { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
+      .then(function (data) { return { ok: true, data: data }; })
+      .catch(function (e) { console.error("Could not load " + url, e); return { ok: false, error: e }; });
   }
 
   function openModal(id) { $(id).hidden = false; }
@@ -59,11 +59,9 @@
     return hh + " h " + (mm < 10 ? "0" : "") + mm + " min";
   }
 
-  /** Inline badge for a parameter without a cited source. */
+  /** Inline badge showing the source of a parameter on hover. */
   function sourceTag(source) {
-    return source
-      ? '<span class="tag cited" title="' + esc(source) + '">cited</span>'
-      : '<span class="tag assumed" title="Assumed value for demo – source pending">assumed</span>';
+    return '<span class="tag cited" title="' + esc(source) + '">source</span>';
   }
 
   window.MW = window.MW || {};

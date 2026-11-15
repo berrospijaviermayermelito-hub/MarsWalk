@@ -91,6 +91,7 @@ button, select { font: inherit; color: inherit; }
 
 /* Traffic light */
 .selects { display: flex; gap: 8px; margin-bottom: 12px; }
+.selects label:first-child { flex: 2.2; }
 .selects label { flex: 1; display: flex; flex-direction: column; gap: 3px; font-size: 0.68rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
 .selects select { background: var(--surface-2); border: 1px solid var(--border); border-radius: 6px; padding: 5px; font-size: 0.8rem; text-transform: none; letter-spacing: 0; }
 .lights { display: flex; justify-content: center; gap: 14px; margin-bottom: 8px; }
@@ -102,7 +103,13 @@ button, select { font: inherit; color: inherit; }
 .verdict.green { color: var(--green); } .verdict.amber { color: var(--amber); } .verdict.red { color: var(--red); }
 .factors { list-style: none; display: grid; gap: 4px; }
 .factors li { display: flex; align-items: center; gap: 8px; font-size: 0.8rem; }
-.factors b { margin-left: auto; } .factors small { color: var(--muted); width: 72px; text-align: right; }
+.factors li { padding: 3px 0; border-bottom: 1px solid var(--border); }
+.factors li:last-child { border-bottom: none; }
+.factors b { margin-left: auto; } .factors small { color: var(--muted); width: 86px; text-align: right; font-size: 0.7rem; }
+.factors .nodata { color: var(--muted); font-weight: 500; }
+.rad-value { font-size: 0.9rem; }
+.src { display: inline-block; margin-top: 6px; color: var(--accent); font-size: 0.75rem; }
+.caption a { color: var(--accent); }
 
 /* Params & tags */
 .params { list-style: none; display: grid; gap: 6px; }
@@ -110,7 +117,9 @@ button, select { font: inherit; color: inherit; }
 .params li > span:first-child { color: var(--muted); flex: 1; }
 .tag { display: inline-block; font-size: 0.62rem; text-transform: uppercase; letter-spacing: 0.06em; padding: 2px 6px; border-radius: 4px; font-weight: 700; }
 .tag.assumed { background: rgba(255, 183, 77, 0.15); color: var(--amber); }
-.tag.cited { background: rgba(61, 220, 132, 0.15); color: var(--green); }
+.tag.cited { background: rgba(61, 220, 132, 0.15); color: var(--green); cursor: help; }
+.tag.input { background: rgba(79, 160, 255, 0.15); color: var(--accent); }
+.params input { width: 56px; background: var(--surface-2); border: 1px solid var(--border); border-radius: 6px; color: var(--text); padding: 3px 5px; font: inherit; font-weight: 700; text-align: right; }
 
 .credit { margin-top: auto; font-size: 0.7rem; color: var(--muted); line-height: 1.5; display: grid; gap: 4px; }
 

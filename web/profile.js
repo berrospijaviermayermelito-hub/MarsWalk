@@ -1,8 +1,7 @@
 // ═══════════════════════════════════════════════════════════════════════
 // MarsWalk – profile.js
 // Elevation profile of the current route (Chart.js, MIT license).
-// Elevation comes from route.js (meta.elevations_m) or is sampled from
-// data/cost_grid.json (elevation_m). Without either, an empty state is shown.
+// Elevation comes from web/route.js (heights from data/heights.json, CTX DTM).
 // ═══════════════════════════════════════════════════════════════════════
 
 (function () {
@@ -22,17 +21,11 @@
       return;
     }
 
-    var pts, elev;
-    if (route.elevations && route.elevations.length === route.coords.length) {
-      pts = route.coords;
-      elev = route.elevations;
-    } else if (MW.costGrid && MW.costGrid.elevation_m) {
-      pts = MW.densify(route.coords, 0.05);
-      elev = MW.sampleElevation(MW.costGrid, pts);
-    } else {
-      setEmpty("Elevation profile will appear once data/cost_grid.json (elevation_m) is available.");
+    if (!route.elevations || route.elevations.length !== route.coords.length) {
+      setEmpty("No elevation data for this route.");
       return;
     }
+    var pts = route.coords, elev = route.elevations;
 
     var cum = MW.cumulativeKm(pts);
     var data = [], minE = Infinity, maxE = -Infinity, gain = 0, prev = null;

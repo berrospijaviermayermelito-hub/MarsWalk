@@ -1,82 +1,61 @@
-# Frontend: mínimo para cumplir el reto
+# Frontend: checklist against the challenge
 
-Checklist del frontend (`web/`) derivado del enunciado oficial del reto. Complementa [INFORME.md](INFORME.md) y [AGENTS.md](AGENTS.md).
+How the web app (`web/`) covers the challenge statement. Team rules and frozen decisions:
+[TEAM_RULES.md](TEAM_RULES.md). Data formats: README, "Data format".
 
-## El enunciado, frase por frase
+## The challenge, phrase by phrase
 
-> «…crear una **vista integrada y en capas** de una **ubicación o ruta** en la superficie marciana que reúna **datos de múltiples misiones** científicas de la NASA y pueda ayudar a un explorador humano a **planificar y llevar a cabo** una caminata marciana exitosa mientras realiza **ciencia** a lo largo del camino.»
+> "…create an **integrated, layered view** of a **location or route** on the Martian surface that
+> brings together **data from multiple NASA science missions** and can help a human explorer
+> **plan and carry out** a successful Mars walk while doing exciting new **science** along the way."
 >
-> El astronauta quiere «**detalles de sus rutas y destinos**, actualizaciones sobre las **condiciones actuales** y los datos para completar su misión de forma **rápida y segura**».
+> The explorer wants "**details of their routes and destinations**, updates on **current
+> conditions**, and the data needed to complete their mission **quickly and safely**."
 
-Cada frase en negrita tiene que verse en la pantalla. Si una no aparece en el video de 30 s, el jurado no la va a contar.
+Every phrase in bold must be visible on screen and in the 30-second video.
 
-## MUST: sin esto no cumplimos el reto
+## Must-have features
 
-Estado: ✅ hecho · 🟡 parcial · ❌ falta (al 14 nov, tarde).
-
-| # | Funcionalidad | Frase del reto | Estado |
+| # | Feature | Challenge phrase | Status |
 | --- | --- | --- | --- |
-| 1 | **Mapa base de Jezero** con CRS equirectangular y mosaicos de Mars Trek | ubicación | ✅ CTX 6 m + HiRISE 25 cm + Viking de contexto |
-| 2 | **Capas activables** con misión/instrumento en el nombre | vista en capas · múltiples misiones | ✅ MOLA (MGS), THEMIS (Odyssey), celdas bloqueadas · minerales vía paradas CRISM |
-| 3 | **Ruta dibujada** desde `route.js` + **ruta de ejemplo precargada** | ruta · planificar | ✅ usa `route.js` si existe; si no, ruta demo (ida y vuelta) |
-| 4 | **Resumen de ruta**: distancia, tiempo de EVA, paradas | rápida | ✅ |
-| 5 | **Perfil de elevación** (Chart.js) | detalles de sus rutas | 🟡 listo, espera `elevation_m` en `cost_grid.json` |
-| 6 | **Paradas científicas** con **briefing** | destinos · ciencia | ✅ con textos de muestra (ciencia debe confirmar) |
-| 7 | **Semáforo de condiciones** con selector de estación/hora | condiciones actuales | 🟡 listo, con datos de MUESTRA hasta `meda_summary.json` |
-| 8 | **Reglas de seguridad visibles** | segura | ✅ círculo a escala de Marte, pendiente > s_max, límite de tiempo |
-| 9 | **Panel «Data sources»** + `DATA_SOURCES.md` | múltiples misiones | ✅ |
-| 10 | **Interfaz en inglés** con carga y error | requisito | ✅ |
-| 11 | **Copia local de mosaicos** | demo confiable | ✅ `web/tiles/ctx` (7,7 MB) |
-| 12 | **Desplegado** en GitHub Pages | requisito | ❌ lo activa el dueño del repo |
+| 1 | Jezero base map, equirectangular Mars CRS, Mars Trek tiles | location | Done: CTX 6 m, HiRISE 25 cm, Viking context |
+| 2 | Toggleable layers named with mission / instrument | layered view, multiple missions | Done: MOLA (MGS), THEMIS (Mars Odyssey), blocked terrain (CTX DTM), stops, walk-back radius |
+| 3 | Route from `route.js` (A*, habitat → A → B → C → habitat) | route, plan | Done |
+| 4 | Route summary: distance, walking time, stops | quickly | Done (time at stops is a user input) |
+| 5 | Elevation profile (Chart.js) | details of their routes | Done (`data/heights.json` via `route.js`) |
+| 6 | Science stops with briefing card | destinations, science | Done (`data/stops.json`, NASA text) |
+| 7 | Typical conditions by season and hour | current conditions | Done: air/ground temperature, pressure, wind (MEDA), no colors |
+| 8 | Visible safety rules | safely | Done: walk-back radius at Mars scale, blocked terrain, EVA duration |
+| 9 | Radiation context | safely | Done: RAD reference rate × EVA duration |
+| 10 | Data sources panel + `DATA_SOURCES.md` | multiple NASA missions | Done |
+| 11 | English UI with loading and error states | submission rule | Done |
+| 12 | Offline tiles | reliable demo | Done: falls back to `data/tiles/` |
+| 13 | Published on GitHub Pages | submission rule | Pending (repository owner) |
 
-## SHOULD: sube la nota si hay tiempo
+## Extras
 
-- ✅ **Modo «Start EVA»** (cubre «llevar a cabo», no solo planificar): botón que recorre la ruta parada por parada, centra el mapa en cada una, abre su briefing y muestra el tiempo acumulado. Además es la mejor toma para el video.
-- Clic en origen y destino para recalcular la ruta en vivo.
-- ✅ Panel de parámetros con etiqueta «assumed» o «cited» en cada valor.
-- Puntaje científico por ruta («safest route through ≥ 1 carbonate outcrop»).
+- **Start EVA** mode ("carry out"): walks the route stop by stop, opens each briefing and shows the
+  elapsed distance and time. Best shot for the video.
+- Route parameters panel with the source of each value on hover.
 
-## COULD: solo si sobra tiempo
-
-- Vista 3D con CesiumJS.
-- Comparar dos rutas (la más corta frente a la más segura).
-
-## Contrato con los otros equipos (implementado en el frontend, por confirmar)
-
-El frontend solo consume estos datos. Si un archivo falta, la app usa `web/sample-data.js` y lo marca como «Sample data».
+## Integration contract (as implemented)
 
 ```js
-// route.js (equipo de ruta). Se llama una vez por tramo: hábitat → A → B → C → hábitat
-window.MarsWalkRoute = {
-  findPath: function (startLatLng, endLatLng, costGrid) {
-    return { path: [[lat, lng], ...], elevations_m: [...] /* opcional */ };
-  },
-};
-// Para dibujar otra ruta desde fuera: MW.drawRoute(path, { label: "..." })
+// web/route.js (route team)
+await MarsWalkRoute.init("../data", { speedKmh, walkBackKm });
+MarsWalkRoute.findPathVia([[lat, lng], ...], habitatLatLng)
+//   -> { blocked, path, distance_km, elevations_m, max_distance_from_habitat_km, ... }
+
+// web/map.js (frontend)
+MW.drawRoute(path, { label, elevations_m, distance_km, max_distance_from_habitat_km });
 ```
 
-```jsonc
-// data/cost_grid.json (equipo de datos). Arrays planos (fila norte primero) o [fila][col].
-{ "bounds": [[latSur, lngOeste], [latNorte, lngEste]], "rows": 500, "cols": 500,
-  "s_max_deg": 15, "slope_deg": [...], "roughness": [...], "elevation_m": [...] }
+Files read by the app: `data/stops.json`, `data/meda_summary.json`, `data/cost_grid.json`,
+`data/radiation_context.json` (and `data/heights.json` through `route.js`).
 
-// data/meda_summary.json (equipo de datos)
-{ "source": "MEDA, sols X–Y",
-  "hours": ["06:00", "09:00", "12:00", "15:00", "18:00"],
-  "seasons": { "Northern spring (Ls 0–90)": { "06:00": { "temp_c": -78, "dust_tau": 0.45 } } } }
+## Rules for the frontend
 
-// data/stops.json (equipo de ciencia)
-{ "habitat": { "name": "...", "latlng": [lat, lng] },
-  "stops": [{ "id": "A", "name": "...", "latlng": [lat, lng], "mineral": "...", "instrument": "MRO CRISM",
-              "briefing": "...", "task": "...", "source_url": "..." }] }
-```
-
-Los parámetros (s_max, walk_back_km, vel_kmh, límite de EVA, umbrales del semáforo) están en `web/config.js`. Al conseguir una fuente, se cambia `source: null` por la cita y la etiqueta pasa a «cited».
-
-## Pendiente
-
-1. Equipo de ciencia: confirmar coordenadas del hábitat y las paradas (`data/stops.json`).
-2. Equipo de datos: `cost_grid.json` (activa capa de bloqueo, chequeo de pendiente y perfil) y `meda_summary.json` (reemplaza la muestra).
-3. Equipo de ruta: `web/route.js` con `MarsWalkRoute.findPath`.
-4. Fuentes para los valores «assumed».
-5. Activar GitHub Pages (Settings → Pages → rama, carpeta `/`) y probar `…/web/` en incógnito.
+- Only sourced values on screen; anything without a source is a user input, clearly labeled.
+- No traffic-light colors without a sourced threshold.
+- Never `L.circle` (Earth radius): use `marsCircle()` in `map.js`. Never `tms: true`.
+- Feature freeze Sunday 14:00 (Lima); after that, bug fixes only, by pull request.
