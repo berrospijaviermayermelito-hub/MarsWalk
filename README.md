@@ -40,6 +40,8 @@ NASA data ──► preprocessing/ (Python) ──► data/*.json ──► web/
 | `data/radiation_context.json` | Reference surface radiation dose rate (Curiosity RAD, Gale crater) for EVA dose context |
 | `preprocessing/build_overlays.py` | Renders the cost grid as transparent PNG overlays for the map |
 | `data/overlays/` | `slope.png`, `blocked.png` and `overlays.json` (bounds and legend) |
+| `preprocessing/build_candidate_sites.py` | Collects candidate habitat and science stops from NASA Mars Trek and checks them against the cost grid |
+| `data/candidate_sites.json` | 17 NASA Mars Trek points of interest with coordinates, official description and walkability |
 | `data/cost_grid_preview.png` | Quick-look image of elevation, slope and cost |
 | `web/` | CesiumJS app (in progress) |
 | `DATA_SOURCES.md` | Every dataset and reference used, with URL and license/DOI |

@@ -68,6 +68,16 @@ Solar longitude (season) is computed with the algorithm of Allison & McEwen (200
 and Space Science* 48, 215-235, doi:[10.1016/S0032-0633(99)00092-6](https://doi.org/10.1016/S0032-0633(99)00092-6),
 as used by NASA GISS Mars24 (https://www.giss.nasa.gov/tools/mars24/).
 
+### NASA Mars Trek Jezero points of interest (candidate habitat and science stops)
+
+| | |
+|---|---|
+| Source | NASA Mars Trek (NASA/JPL) feature services behind two Jezero bookmarks: "Jezero Crater Features and Landforms" (`mars2020_waypoints`) and "Perseverance Landing Site", the Mastcam-Z tour (`mastcam_z_waypoints`) |
+| URLs | https://trek.nasa.gov/mars/trekarcgis/rest/services/mars2020_waypoints/MapServer/0 and https://trek.nasa.gov/mars/trekarcgis/rest/services/mastcam_z_waypoints/MapServer/0; description pages under https://trek.nasa.gov/assets/bookmarks/mars/ |
+| License | NASA content, public domain unless noted |
+| Accessed | 2026-11-15 |
+| Used for | `data/candidate_sites.json` (built by `preprocessing/build_candidate_sites.py`): names, coordinates and the first sentences of each NASA description, checked against the cost grid |
+
 ### Curiosity RAD surface radiation dose (reference value)
 
 | | |
@@ -88,7 +98,6 @@ and complete its URL, license and access date when it is added.
 |---|---|---|---|
 | MRO HiRISE, Jezero Mosaic, Controlled | MRO / HiRISE | NASA Mars Trek WMTS | High-resolution detail near the route |
 | Perseverance (Mars 2020) Path | Mars 2020 | NASA Mars Trek | Real rover traverse overlay |
-| "Jezero Crater Features and Landforms" bookmark | — | NASA Mars Trek | Candidate science stops |
 | Geologic map of Jezero crater and Nili Planum (Sun & Stack, 2020, USGS SIM 3464) | — | USGS-NASA Planetary Geologic Mapping Program, doi:[10.3133/sim3464](https://doi.org/10.3133/sim3464) | Choosing stops by geologic unit |
 | Perseverance raw images (credit NASA/JPL-Caltech) | Mars 2020 cameras | https://mars.nasa.gov/mars2020/multimedia/raw-images/ | Real photo at each stop |
 
