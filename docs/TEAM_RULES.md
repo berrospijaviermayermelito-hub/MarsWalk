@@ -87,16 +87,25 @@ read these files; sample or illustrative values must not be shown.
 
 ## 6. Open items before submission
 
+### Done (2026-11-15)
+
+| Owner | Item | Where |
+|---|---|---|
+| Frontend | Frozen parameters with sources in `web/config.js`; time at stops is a user input (default 0) | PR #6 |
+| Frontend | App reads `data/stops.json`, `data/meda_summary.json`, `data/cost_grid.json`, `data/radiation_context.json`; sample values removed | PR #6 |
+| Frontend | Radiation from `data/radiation_context.json` (the unverified 0.64 mSv/day removed) | PR #6 |
+| Frontend | Claims without a source removed (THEMIS hint, "CRISM / HiRISE" stop label) | PR #6 |
+| Frontend | Mars radius 3,396.19 km | PR #6 |
+| Frontend | Spanish `docs/INFORME.md` removed, `docs/FRONTEND.md` translated | PR #6 |
+| Route | Default speed 3.4 km/h; README section and AI-use line for `web/route.js` | PR #7 |
+| Data & GIS | GitHub Pages published from `main`: https://berrospijaviermayermelito-hub.github.io/MarsWalk/web/ | Repository settings |
+
+### Still open
+
 | Owner | Item |
 |---|---|
-| Frontend | Use the frozen parameters above in `web/config.js` (today: `s_max` 15, speed 3 km/h, stop time and EVA limit without source). |
-| Frontend | Load `data/stops.json` and `data/meda_summary.json` (new format) and remove `web/sample-data.js` values from the UI. |
-| Frontend | Replace the radiation value 0.64 mSv/day (not verified) with `data/radiation_context.json`. |
-| Frontend | Remove claims without a source (for example the THEMIS hint "rockier / more consolidated ground"), or add the source to DATA_SOURCES.md. |
-| Frontend | Use `body_radius_m` (3,396,190 m) instead of 3,389.5 km. |
-| Frontend | Translate or remove the Spanish documents in `docs/` (`INFORME.md`): linked material must be in English. |
-| Route | Default speed 3.4 km/h (today 3.3). |
+| Frontend | State the AI use for `web/` (except `route.js`) in the README "Use of AI" section. |
 | Science | Confirm or add a `task` for each stop (sourced), and pick one Perseverance photo per stop with its image ID and exact credit. |
 | Science | The CRISM references for clays and carbonates (Goudge et al. 2015, Horgan et al. 2020) are not verified yet; verify them or do not use them. |
 | Pitch | 30-second video or ≤ 7 slides, in English or with English subtitles; AI images watermarked; no NASA logo. |
-| All | State your own AI use in the README "Use of AI" section. |
+| All | Before submitting: open every link (repository, prototype, documentation, demo) in a private browser window. |
