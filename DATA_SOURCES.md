@@ -145,7 +145,6 @@ and complete its URL, usage terms and access date when it is added.
 
 | Dataset | Mission / instrument | Source | Planned use |
 |---|---|---|---|
-| MRO HiRISE, Jezero Mosaic, Controlled | MRO / HiRISE | NASA Mars Trek WMTS | High-resolution detail near the route |
 | Geologic map of Jezero crater and Nili Planum (Sun & Stack, 2020, USGS SIM 3464) | — | USGS-NASA Planetary Geologic Mapping Program, doi:[10.3133/sim3464](https://doi.org/10.3133/sim3464) | Choosing stops by geologic unit |
 | Perseverance raw images (credit NASA/JPL-Caltech) | Mars 2020 cameras | https://mars.nasa.gov/mars2020/multimedia/raw-images/ | Real photo at each stop |
 
