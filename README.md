@@ -414,7 +414,12 @@ NASA Space Apps asks teams to state where and how AI tools were used. MarsWalk u
 - **Text:** this README and DATA_SOURCES.md were drafted with Claude's help. Every fact in them is
   checked against the source listed in DATA_SOURCES.md.
 - **Images, video and audio:** none were generated with AI.
-- **Web app (`web/`):** AI use to be stated by its authors before submission.
+- **Web app (`web/`, except `route.js`):** the frontend code (`index.html`, `style.css`,
+  `config.js`, `ui.js`, `map.js`, `profile.js`, `briefing.js`, `app.js`) and the frontend docs
+  (`docs/FRONTEND.md`, `docs/AGENTS.md`) were written with Claude Code (Anthropic) and reviewed and
+  tested in the browser by the frontend author. The AI did not supply any value shown on screen:
+  the app only displays the files in `data/` and the route parameters listed in DATA_SOURCES.md,
+  and the time at each stop is a user input.
 - **Route planner (web/route.js):** written with Claude's help (Anthropic) and tested against the real cost grid; reviewed by the route author.
 
 ## Data and credits
