@@ -1,28 +1,41 @@
 // ═══════════════════════════════════════════════════════════════════════
 // MarsWalk – briefing.js
-// Sidebar panels: route summary + safety checks, conditions traffic light,
-// stop briefing card, guided EVA mode and the data-sources modal.
+// Sidebar panels: route summary + safety checks, typical conditions (MEDA),
+// radiation context (RAD), stop briefing card, guided EVA mode and the
+// data-sources modal. Only sourced values are shown (docs/TEAM_RULES.md).
 // ═══════════════════════════════════════════════════════════════════════
 
 (function () {
   var ui = MW.ui, $ = ui.$, esc = ui.esc;
   var CFG = window.MW_CONFIG, P = CFG.PARAMS;
 
+  // Planning input without a published source: set by the user, 0 by default.
+  MW.stopMin = CFG.STOP_MIN_DEFAULT;
+
+  var radiation = null; // data/radiation_context.json
+
   // ── Route summary & safety checks ────────────────────────────────────
+  function evaHours(route) {
+    return route.walkH + MW.getStops().length * MW.stopMin / 60;
+  }
+
   function renderSummary(route) {
+    var evaH = evaHours(route);
+    var overTime = evaH > P.eva_limit_h.value;
     $("val-distance").textContent = route.totalKm.toFixed(2) + " km (round trip)";
-    $("val-time").textContent = ui.fmtHours(route.evaH);
+    $("val-time").textContent = ui.fmtHours(evaH);
     $("val-time-detail").textContent =
-      "Walking " + ui.fmtHours(route.walkH) + " @ " + P.vel_kmh.value + " km/h + " +
-      MW.getStops().length + " × " + P.stop_min.value + " min at stops";
+      "Walking " + ui.fmtHours(route.walkH) + " @ " + P.vel_kmh.value + " km/h" +
+      (MW.stopMin > 0 ? " + " + MW.getStops().length + " × " + MW.stopMin + " min at stops" : " (time at stops not included)");
     $("val-stops").textContent = MW.getStops().length + " science stops";
 
-    var pct = Math.min(100, route.evaH / P.eva_limit_h.value * 100);
+    var pct = Math.min(100, evaH / P.eva_limit_h.value * 100);
     var bar = $("eva-bar");
     bar.style.width = pct + "%";
-    bar.className = "bar-fill " + (route.overTime ? "red" : pct > 80 ? "amber" : "green");
-    $("eva-bar-label").textContent = Math.round(pct) + "% of " + P.eva_limit_h.value + " h EVA limit";
+    bar.className = "bar-fill " + (overTime ? "red" : pct > 80 ? "amber" : "green");
+    $("eva-bar-label").textContent = Math.round(pct) + "% of the " + P.eva_limit_h.value + " h nominal EVA";
 
+    var sBlock = MW.costGrid ? MW.costGrid.meta.s_block_deg : P.s_block_deg.value;
     var checks = [
       {
         ok: !route.outsideWalkBack,
@@ -31,17 +44,17 @@
           : "Always within " + P.walk_back_km.value + " km walk-back radius (max " + route.maxFromHabKm.toFixed(1) + " km)",
       },
       {
-        ok: !route.overTime,
-        text: route.overTime ? "EVA exceeds the " + P.eva_limit_h.value + " h limit" : "EVA fits within the " + P.eva_limit_h.value + " h limit",
+        ok: !overTime,
+        text: overTime ? "EVA exceeds the " + P.eva_limit_h.value + " h nominal duration" : "EVA fits within the " + P.eva_limit_h.value + " h nominal duration",
       },
       {
         ok: route.slopeChecked && !route.crossesBlocked,
         warn: !route.slopeChecked,
         text: !route.slopeChecked
-          ? "Slope check pending (cost_grid.json not loaded)"
+          ? "Slope check unavailable (cost_grid.json not loaded)"
           : route.crossesBlocked
-            ? "Route crosses terrain steeper than s_max = " + P.s_max_deg.value + "° (red dots)"
-            : "No slope above s_max = " + P.s_max_deg.value + "° (max " + Math.round(route.maxSlopeDeg) + "°)",
+            ? "Route crosses blocked terrain (CTX slope > " + sBlock + "°, red dots)"
+            : "No blocked terrain on the route (max CTX slope " + (route.maxSlopeDeg || 0).toFixed(1) + "°, blocked above " + sBlock + "°)",
       },
     ];
     $("safety-checks").innerHTML = checks.map(function (c) {
@@ -49,65 +62,85 @@
       var icon = c.warn ? "!" : c.ok ? "✓" : "✕";
       return '<li class="' + cls + '"><span>' + icon + "</span>" + esc(c.text) + "</li>";
     }).join("");
+
+    renderRadiation(evaH);
   }
 
   function renderParams() {
     $("params").innerHTML = Object.keys(P).map(function (k) {
       var p = P[k];
       return "<li><span>" + esc(p.label) + "</span><b>" + p.value + " " + esc(p.unit) + "</b>" + ui.sourceTag(p.source) + "</li>";
-    }).join("");
+    }).join("") +
+      '<li><span>Time at each stop</span><input type="number" id="in-stop-min" min="0" max="240" step="5" value="' + MW.stopMin +
+      '" aria-label="Time at each stop in minutes"> min<span class="tag input" title="No published value: set your own planning time">your input</span></li>';
+    $("in-stop-min").oninput = function () {
+      var v = parseFloat(this.value);
+      MW.stopMin = isNaN(v) || v < 0 ? 0 : Math.min(v, 240);
+      if (MW.getRoute()) renderSummary(MW.getRoute());
+    };
   }
 
-  // ── Conditions traffic light ─────────────────────────────────────────
+  // ── Radiation context (not a traffic light) ──────────────────────────
+  function setRadiation(r) {
+    radiation = r;
+    if (MW.getRoute()) renderRadiation(evaHours(MW.getRoute()));
+  }
+
+  function renderRadiation(evaH) {
+    var box = $("radiation");
+    if (!radiation) { box.innerHTML = '<p class="empty">Radiation data unavailable.</p>'; return; }
+    var rate = radiation.absorbed_dose_rate_ugy_per_hour;
+    box.innerHTML =
+      '<p class="rad-value"><b>≈ ' + Math.round(rate * evaH) + " µGy</b> absorbed dose for this EVA</p>" +
+      '<p class="caption">' + rate + " µGy/h × " + evaH.toFixed(1) + " h. Reference rate measured by Curiosity RAD in Gale crater " +
+      "(about " + radiation.absorbed_dose_rate_ugy_per_day + " µGy per day, mostly galactic cosmic rays), not at Jezero. " +
+      "Absorbed dose, not a forecast; solar particle events not included.</p>" +
+      '<a class="src" href="' + esc(radiation.meta.source_url) + '" target="_blank" rel="noopener">Source: NASA PIA17600 →</a>';
+  }
+
+  // ── Typical conditions (MEDA) ────────────────────────────────────────
   var meda = null;
+  var VARS = [
+    { key: "air_temp_c", label: "Air temperature", unit: "°C", digits: 0 },
+    { key: "ground_temp_c", label: "Ground temperature", unit: "°C", digits: 0 },
+    { key: "pressure_pa", label: "Pressure", unit: "Pa", digits: 0 },
+    { key: "wind_speed_ms", label: "Wind speed", unit: "m/s", digits: 1 },
+  ];
 
-  function level(value, kind) {
-    var t = CFG.CONDITIONS[kind];
-    if (kind === "temp_c") return value >= t.green_min ? "green" : value >= t.amber_min ? "amber" : "red";
-    return value <= t.green_max ? "green" : value <= t.amber_max ? "amber" : "red";
-  }
-  var RANK = { green: 0, amber: 1, red: 2 };
-  var VERDICT = {
-    green: "Good window for an EVA",
-    amber: "EVA possible with precautions",
-    red: "Not recommended – postpone the EVA",
-  };
-
-  function setupConditions(result) {
-    meda = result.data;
-    var seasons = Object.keys(meda.seasons);
-    var hours = meda.hours || Object.keys(meda.seasons[seasons[0]]);
-    $("sel-season").innerHTML = seasons.map(function (s) { return "<option>" + esc(s) + "</option>"; }).join("");
-    $("sel-hour").innerHTML = hours.map(function (h) { return "<option>" + esc(h) + "</option>"; }).join("");
-    $("sel-hour").value = hours[Math.floor(hours.length / 2)];
+  function setupConditions(data) {
+    meda = data;
+    $("sel-season").innerHTML = meda.ls_bins.map(function (b, i) {
+      return '<option value="' + i + '">' + esc(b.season) + " (Ls " + b.ls_start + "–" + b.ls_end + "°)</option>";
+    }).join("");
+    var hours = [];
+    for (var h = 0; h < 24; h++) hours.push('<option value="' + h + '">' + (h < 10 ? "0" : "") + h + ":00</option>");
+    $("sel-hour").innerHTML = hours.join("");
+    $("sel-hour").value = "12";
     $("sel-season").onchange = $("sel-hour").onchange = renderConditions;
-    $("cond-source").textContent = "Source: " + (meda.source || "MEDA summary");
-    $("cond-sample").hidden = !result.sample;
+    $("cond-source").innerHTML = "Source: " + esc(meda.meta.source) + ", " + meda.meta.sols_used + " sols (" +
+      meda.meta.sol_range[0] + "–" + meda.meta.sol_range[1] + "). Median of the sampled sols; range = 10th–90th percentile. " +
+      '<a href="https://doi.org/' + esc(meda.meta.source_doi) + '" target="_blank" rel="noopener">doi:' + esc(meda.meta.source_doi) + "</a>";
     $("cond-body").hidden = false;
     $("cond-loading").hidden = true;
     renderConditions();
   }
 
-  function renderConditions() {
-    var row = meda.seasons[$("sel-season").value][$("sel-hour").value];
-    if (!row) return;
-    var rad = CFG.CONDITIONS.radiation_msv_day;
-    var factors = [
-      { name: "Temperature", value: row.temp_c + " °C", lvl: level(row.temp_c, "temp_c"), src: "MEDA" },
-      { name: "Dust (opacity τ)", value: row.dust_tau.toFixed(2), lvl: level(row.dust_tau, "dust_tau"), src: "MEDA" },
-      { name: "Radiation", value: (rad.value / 24).toFixed(3) + " mSv/h", lvl: "green", src: "RAD (Gale)" },
-    ];
-    var worst = factors.reduce(function (w, f) { return RANK[f.lvl] > RANK[w] ? f.lvl : w; }, "green");
+  function fmt(v, d) { return v.toFixed(d); }
 
-    document.querySelectorAll("#traffic-light .bulb").forEach(function (b) {
-      b.classList.toggle("on", b.dataset.lvl === worst);
-    });
-    $("cond-verdict").textContent = VERDICT[worst];
-    $("cond-verdict").className = "verdict " + worst;
-    $("cond-factors").innerHTML = factors.map(function (f) {
-      return '<li><i class="dot ' + ({ green: "ok", amber: "warn", red: "err" })[f.lvl] + '"></i>' +
-        esc(f.name) + "<b>" + esc(f.value) + '</b><small>' + esc(f.src) + "</small></li>";
+  function renderConditions() {
+    var bin = meda.ls_bins[+$("sel-season").value];
+    var hour = +$("sel-hour").value;
+    $("cond-factors").innerHTML = VARS.map(function (v) {
+      var cell = bin.hourly[v.key] ? bin.hourly[v.key][hour] : null;
+      var value = cell
+        ? "<b>" + fmt(cell.median, v.digits) + " " + v.unit + "</b><small>" + fmt(cell.p10, v.digits) + " to " + fmt(cell.p90, v.digits) + "</small>"
+        : '<b class="nodata">no data</b><small></small>';
+      return "<li>" + esc(v.label) + value + "</li>";
     }).join("");
+  }
+
+  function conditionsUnavailable(msg) {
+    $("cond-loading").textContent = msg;
   }
 
   // ── Stop briefing card ───────────────────────────────────────────────
@@ -117,7 +150,7 @@
     if (!stop) { card.hidden = true; return; }
     $("brief-id").textContent = stop.id;
     $("brief-name").textContent = stop.name;
-    $("brief-meta").textContent = stop.mineral + " · detected by " + stop.instrument;
+    $("brief-meta").textContent = [stop.mineral, stop.instrument ? "observed by " + stop.instrument : ""].filter(Boolean).join(" · ");
     $("brief-text").textContent = stop.briefing;
     $("brief-task").textContent = stop.task || "";
     $("brief-task-row").hidden = !stop.task;
@@ -145,7 +178,7 @@
     var s = eva.steps[stepIndex];
     var km = route.cumKm[s.idx];
     var stopsDone = eva.steps.slice(1, stepIndex).filter(function (x) { return x.kind === "stop"; }).length;
-    return { km: km, h: km / P.vel_kmh.value + stopsDone * P.stop_min.value / 60 };
+    return { km: km, h: km / P.vel_kmh.value + stopsDone * MW.stopMin / 60 };
   }
 
   function animateTo(route, fromIdx, toIdx, done) {
@@ -185,8 +218,7 @@
     $("btn-eva-prev").disabled = eva.step === 0;
     $("btn-eva-next").disabled = eva.step === eva.steps.length - 1;
 
-    var target = route.coords[s.idx];
-    MW.map.flyTo(target, s.kind === "stop" ? 14 : 13, { duration: 1.2 });
+    MW.map.flyTo(route.coords[s.idx], s.kind === "stop" ? 14 : 13, { duration: 1.2 });
     animateTo(route, prevIdx, s.idx);
     showStop(s.kind === "stop" ? s.stop : null, info);
   }
@@ -241,5 +273,10 @@
   renderParams();
   renderSources();
 
-  MW.briefing = { showStop: showStop, setupConditions: setupConditions };
+  MW.briefing = {
+    showStop: showStop,
+    setupConditions: setupConditions,
+    conditionsUnavailable: conditionsUnavailable,
+    setRadiation: setRadiation,
+  };
 })();

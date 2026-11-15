@@ -191,33 +191,31 @@
     });
   }
 
-  // ── Blocked terrain from cost_grid.json (slope > s_max painted red) ──
+  // ── Blocked terrain from data/cost_grid.json (cost = -1 painted red) ──
+  // Format (README "Data format"): rows, cols and bounds_deg live in `meta`;
+  // arrays are flat, row-major, row 0 = north edge, col 0 = west edge.
   var blockedLayer = null;
 
-  /** Accepts flat arrays (row-major, north row first) or nested [row][col]. */
-  function gridValue(arr, r, c, cols) {
-    return Array.isArray(arr[0]) ? arr[r][c] : arr[r * cols + c];
-  }
-
   function setCostGrid(grid) {
-    var sMax = grid.s_max_deg || CFG.PARAMS.s_max_deg.value;
-    if (!grid.slope_deg) return;
+    var m = grid.meta, b = m.bounds_deg;
+    grid.rows = m.rows;
+    grid.cols = m.cols;
+    grid.bounds = [[b.south, b.west], [b.north, b.east]];
+
     var canvas = document.createElement("canvas");
     canvas.width = grid.cols;
     canvas.height = grid.rows;
     var g = canvas.getContext("2d");
     var img = g.createImageData(grid.cols, grid.rows);
-    for (var r = 0; r < grid.rows; r++) {
-      for (var c = 0; c < grid.cols; c++) {
-        var i = (r * grid.cols + c) * 4;
-        if (gridValue(grid.slope_deg, r, c, grid.cols) > sMax) {
-          img.data[i] = 239; img.data[i + 1] = 83; img.data[i + 2] = 80; img.data[i + 3] = 150;
-        }
+    for (var k = 0; k < grid.cost.length; k++) {
+      if (grid.cost[k] < 0) {
+        var i = k * 4;
+        img.data[i] = 239; img.data[i + 1] = 83; img.data[i + 2] = 80; img.data[i + 3] = 150;
       }
     }
     g.putImageData(img, 0, 0);
     blockedLayer = L.imageOverlay(canvas.toDataURL(), grid.bounds, { className: "mw-pixelated" });
-    overlayMaps["Blocked terrain (slope > " + sMax + "°)"] = blockedLayer;
+    overlayMaps["Blocked terrain (CTX slope > " + m.s_block_deg + "°)"] = blockedLayer;
     blockedLayer.addTo(map);
   }
 
@@ -229,10 +227,9 @@
       var r = Math.floor((n - p[0]) / (n - s) * grid.rows);
       var c = Math.floor((p[1] - w) / (e - w) * grid.cols);
       if (r < 0 || c < 0 || r >= grid.rows || c >= grid.cols) return null;
-      return gridValue(grid[field], r, c, grid.cols);
+      return grid[field][r * grid.cols + c];
     });
   }
-  function sampleElevation(grid, coords) { return sampleGrid(grid, "elevation_m", coords); }
 
   /** Resample a polyline every `stepKm`, keeping original vertices. */
   function densify(coords, stepKm) {
@@ -252,30 +249,36 @@
   /**
    * Draw a route and compute its summary. Called with demo data or by route.js.
    * @param {Array<[number, number]>} coords  [lat, lng] pairs, habitat → … → habitat
-   * @param {Object} [meta]  { elevations_m: [...], label: "A* route" }
+   * @param {Object} [meta]  { label, elevations_m, distance_km, max_distance_from_habitat_km } (from route.js)
    */
   function drawRoute(coords, meta) {
     meta = meta || {};
     routeLayer.clearLayers();
     var cum = cumulativeKm(coords);
-    var totalKm = cum[cum.length - 1];
+    // Prefer the planner's own figures (grid cell metrics) so the app and
+    // docs/TEAM_RULES.md report the same numbers.
+    var totalKm = meta.distance_km !== undefined ? meta.distance_km : cum[cum.length - 1];
 
     // Safety: any vertex outside the walk-back radius is flagged.
     var limitKm = CFG.PARAMS.walk_back_km.value;
     var maxFromHab = 0;
-    coords.forEach(function (p) { maxFromHab = Math.max(maxFromHab, distanceKm(habitat.latlng, p)); });
+    if (meta.max_distance_from_habitat_km !== undefined) {
+      maxFromHab = meta.max_distance_from_habitat_km;
+    } else {
+      coords.forEach(function (p) { maxFromHab = Math.max(maxFromHab, distanceKm(habitat.latlng, p)); });
+    }
     var outside = maxFromHab > limitKm;
 
-    // Safety: sample slope every ~20 m; any point above s_max is blocked terrain.
+    // Safety: sample the grid every ~20 m; blocked cells (cost = -1) are flagged.
     var slopeChecked = false, blockedPts = [], maxSlope = null;
-    if (MW.costGrid && MW.costGrid.slope_deg) {
+    if (MW.costGrid) {
       slopeChecked = true;
-      var sMax = MW.costGrid.s_max_deg || CFG.PARAMS.s_max_deg.value;
       var dense = densify(coords, 0.02);
+      var costs = sampleGrid(MW.costGrid, "cost", dense);
       sampleGrid(MW.costGrid, "slope_deg", dense).forEach(function (v, i) {
         if (v === null) return;
         maxSlope = maxSlope === null ? v : Math.max(maxSlope, v);
-        if (v > sMax) blockedPts.push(dense[i]);
+        if (costs[i] < 0) blockedPts.push(dense[i]);
       });
     }
     var unsafe = outside || blockedPts.length > 0;
@@ -295,7 +298,7 @@
     });
 
     var walkH = totalKm / CFG.PARAMS.vel_kmh.value;
-    var evaH = walkH + stops.length * CFG.PARAMS.stop_min.value / 60;
+    var evaH = walkH + stops.length * MW.stopMin / 60;
 
     route = {
       coords: coords,
@@ -324,7 +327,7 @@
 
   // ── Layer control & legend (added once all layers exist) ─────────────
   function finishControls() {
-    overlayMaps["Science stops (CRISM / HiRISE)"] = stopsLayer;
+    overlayMaps["Science stops (NASA Mars Trek points)"] = stopsLayer;
     overlayMaps["Walk-back radius"] = safetyLayer;
     overlayMaps["EVA route"] = routeLayer;
     L.control.layers(baseMaps, overlayMaps, { collapsed: window.innerWidth < 900, position: "topright" }).addTo(map);
@@ -366,7 +369,6 @@
     setStops: setStops,
     highlightStop: highlightStop,
     setCostGrid: setCostGrid,
-    sampleElevation: sampleElevation,
     densify: densify,
     drawRoute: drawRoute,
     fitRoute: fitRoute,

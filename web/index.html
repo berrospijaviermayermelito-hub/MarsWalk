@@ -72,36 +72,36 @@
     </section>
 
     <section>
-      <p class="section-label">Conditions · When?</p>
-      <div class="card" id="traffic-light">
+      <p class="section-label">Typical conditions · When?</p>
+      <div class="card" id="conditions">
         <p class="empty" id="cond-loading">Loading conditions…</p>
         <div id="cond-body" hidden>
           <div class="selects">
             <label>Season <select id="sel-season"></select></label>
-            <label>Local time <select id="sel-hour"></select></label>
+            <label>Local time (LTST) <select id="sel-hour"></select></label>
           </div>
-          <div class="lights">
-            <div class="bulb" data-lvl="green"></div>
-            <div class="bulb" data-lvl="amber"></div>
-            <div class="bulb" data-lvl="red"></div>
-          </div>
-          <p class="verdict" id="cond-verdict"></p>
           <ul class="factors" id="cond-factors"></ul>
-          <p class="caption">Typical conditions for this season and hour – not live weather (MEDA data is released in batches).</p>
+          <p class="caption">Typical values measured by Perseverance (MEDA) for this season and hour – not live weather.</p>
           <p class="caption" id="cond-source"></p>
-          <span class="tag assumed" id="cond-sample" hidden>Sample data</span>
         </div>
       </div>
     </section>
 
     <section>
-      <p class="section-label">Safety parameters</p>
-      <div class="card"><ul class="params" id="params"></ul></div>
+      <p class="section-label">Radiation context</p>
+      <div class="card" id="radiation"><p class="empty">Loading…</p></div>
+    </section>
+
+    <section>
+      <p class="section-label">Route parameters</p>
+      <div class="card"><ul class="params" id="params"></ul>
+        <p class="caption">Hover "source" for the reference. Slope, walk-back and EVA-duration references concern the Moon; the walking speed is for Mars gravity without a spacesuit.</p>
+      </div>
     </section>
 
     <footer class="credit">
       <button class="link-btn" id="btn-sources">Data sources (NASA missions) →</button>
-      <p>Map tiles: NASA/JPL/USGS Mars Trek. Built for NASA Space Apps Challenge 2026.</p>
+      <p>Map tiles: NASA/JPL/USGS Mars Trek. Built for NASA Space Apps Challenge 2026. Code written with AI assistance (see README).</p>
     </footer>
   </aside>
 
@@ -135,17 +135,16 @@
         <tbody id="sources-list"></tbody>
       </table>
     </div>
-    <p class="caption">Values tagged "assumed" are placeholders for the demo until a published source is cited.</p>
+    <p class="caption">Route parameters: NASA NTRS 20210026296 and 20070016007, Peña-Asensio et al. (2023), Cavagna et al. (1998). Time at each stop has no published value and is set by the user.</p>
   </div>
 </div>
 
 <script src="config.js"></script>
-<script src="sample-data.js"></script>
 <script src="ui.js"></script>
 <script src="map.js"></script>
 <script src="profile.js"></script>
 <script src="briefing.js"></script>
-<!-- route.js (A* planner, route team) exposes window.MarsWalkRoute.findPath when ready. -->
+<!-- route.js (A* planner, route team) exposes window.MarsWalkRoute. -->
 <script src="route.js"></script>
 <script src="app.js"></script>
 </body>
