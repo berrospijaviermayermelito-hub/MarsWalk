@@ -1,21 +1,24 @@
 {
   "meta": {
-    "description": "Reference surface radiation dose rate on Mars for EVA planning context. Not measured at Jezero: Perseverance has no ionizing-radiation detector, so this is the value measured by Curiosity's RAD in Gale crater.",
+    "description": "Reference surface radiation dose rate on Mars for EVA planning context. Not measured at Jezero: NASA's list of Perseverance science instruments has no radiation detector, so this is the value measured by Curiosity's RAD in Gale crater.",
     "source": "NASA Photojournal PIA17600, 'Radiation Measurements on Mars' (NASA/JPL-Caltech/SwRI), added 2013-12-09",
     "source_url": "https://science.nasa.gov/photojournal/radiation-measurements-on-mars/",
     "mission_instrument": "Mars Science Laboratory (Curiosity rover), Radiation Assessment Detector (RAD)",
-    "location": "Gale crater (about 5.4 S, 137.8 E), about 3,800 km from Jezero",
+    "location": "Gale crater (Curiosity's exploration site), not Jezero",
     "period": "first 10 months on the surface, August 2012 to June 2013",
     "quantity": "absorbed dose (micrograys), not dose equivalent (sieverts)",
-    "accessed": "2026-11-14"
+    "accessed": "2026-11-14",
+    "credit": "NASA/JPL-Caltech/SwRI",
+    "instrument_list_source": "https://science.nasa.gov/mission/mars-2020-perseverance/science-instruments/"
   },
   "absorbed_dose_rate_ugy_per_day": 210,
   "absorbed_dose_rate_ugy_per_hour": 8.75,
   "eva_dose_formula": "dose_ugy = absorbed_dose_rate_ugy_per_hour * eva_duration_h",
   "caveats": [
-    "Measured in Gale crater, not Jezero. The surface dose is dominated by galactic cosmic rays, which reach the whole planet, and depends mostly on how much atmosphere is overhead. Jezero is at a higher elevation than Gale, so its dose rate is expected to be somewhat higher; this difference is not quantified here.",
-    "The NASA source states that the dose rate varies slowly, between day and night (atmospheric shielding) and with the Martian seasons.",
-    "Solar particle events are not included. Only one weak event was seen in the measurement period; NASA notes they are the big unknown for a human mission and can add a significantly higher dose.",
-    "This is an absorbed dose, not a biological dose equivalent, and a daily average, not a forecast."
-  ]
+    "Measured by Curiosity in Gale crater, not at Jezero: Perseverance does not carry an instrument that measures this radiation. The value at Jezero may differ and is not quantified here.",
+    "The NASA source states that the dose came almost entirely from galactic cosmic rays, and that it varies between day and night (shielding by the atmosphere) and with the Martian seasons.",
+    "Solar particle events are not included. NASA notes that only one weak event was observed in that period and that solar particle events are the big unknown for a human mission to Mars.",
+    "This is an absorbed dose (micrograys), not a biological dose equivalent (sieverts), and an average, not a forecast."
+  ],
+  "absorbed_dose_rate_ugy_per_hour_note": "210 / 24, assuming the NASA figure is per 24-hour day"
 }

@@ -8,7 +8,7 @@ Pipeline:
 
 Input DEM (not committed, see DATA_SOURCES.md):
     Mars 2020 Terrain Relative Navigation CTX DTM Mosaic, USGS Astrogeology,
-    doi:10.5066/P906QQT8 (CC0 1.0).
+    doi:10.5066/P906QQT8 (USGS usage terms: "Please cite authors").
 
 Usage:
     python preprocessing/build_cost_grid.py
@@ -249,7 +249,7 @@ def main():
     heights_json = {
         "meta": {
             **meta,
-            "units": "meters above the Mars areoid (MOLA datum)",
+            "units": "meters; per the USGS product metadata, elevation values refer to the Mars 2020 IAU sphere with a radius of 3396190 m",
             "height_note": f"block mean over {factor}x{factor} pixels",
             "min_m": float(heights.min()),
             "max_m": float(heights.max()),

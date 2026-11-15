@@ -2,8 +2,8 @@
 
 **Plan it safe. Bring science back.**
 
-MarsWalk is a web-based EVA (Mars walk) planner for **Jezero crater** (≈18.4° N, 77.5° E), the
-Perseverance landing site. It is our entry for the NASA Space Apps Challenge 2026, challenge
+MarsWalk is a web-based EVA (Mars walk) planner for the western part of **Jezero crater** (IAU
+name center 18.41° N, 77.69° E), where NASA's Perseverance rover landed on February 18, 2021. It is our entry for the NASA Space Apps Challenge 2026, challenge
 *"Interplanetary Survival Guide: Map of Mars"*.
 
 One screen answers three questions for a human explorer:
@@ -72,8 +72,8 @@ python preprocessing/build_cost_grid.py --self-test
 
 ## Rebuild the weather summary
 
-Downloads about 1.5 GB from the NASA PDS Atmospheres Node (takes several minutes) and keeps only
-small hourly summaries in `data/raw/meda_hourly/`:
+Downloads one CSV per sensor for each sampled sol from the NASA PDS Atmospheres Node (a few MB
+each; it takes several minutes) and keeps only small hourly summaries in `data/raw/meda_hourly/`:
 
 ```bash
 python preprocessing/build_meda_summary.py
@@ -216,7 +216,8 @@ row 0 is the **northern** edge and column 0 is the western edge, so
 - `cost_grid.json`: `slope_deg`, `roughness` (0–1) and `cost`.
   `cost = -1` means the cell is blocked. Its `meta` also has `s_max_deg` (20) and `s_block_deg`
   (15). To draw blocked cells, use `cost = -1` or `s_block_deg`, not a fixed 20°.
-- `heights.json`: `heights_m`, meters relative to the Mars areoid (MOLA datum).
+- `heights.json`: `heights_m`, in meters. Per the USGS product metadata, elevation values refer
+  to the Mars 2020 IAU sphere with a radius of 3,396,190 m.
 
 `meda_summary.json` has 12 `ls_bins` of 30° of solar longitude (Ls 0° = northern spring equinox;
 Jezero is in the northern hemisphere). Each bin has `hourly.<variable>`, a list of 24 entries
@@ -224,7 +225,7 @@ indexed by local true solar hour, each `{median, p10, p90, n}` or `null` when th
 data. Variables: `air_temp_c`, `ground_temp_c`, `pressure_pa`, `wind_speed_ms`.
 
 `radiation_context.json` holds one reference value, `absorbed_dose_rate_ugy_per_day` (210 µGy per
-day, 8.75 µGy per hour), the formula for an EVA dose and its caveats. Radiation is shown as context
+day, 8.75 µGy per hour assuming a 24-hour day), the formula for an EVA dose and its caveats. Radiation is shown as context
 for the planned EVA duration (for example, 3 h ≈ 26 µGy), not as a traffic-light condition that
 changes by hour.
 
@@ -271,8 +272,9 @@ walkable terrain stays connected as a single area.
 ## Limitations
 
 - **Lunar-derived parameters.** The slope, distance and speed limits come from lunar experience
-  and studies. Mars has higher gravity (~3/8 g versus 1/6 g on the Moon) and future suits will
-  differ, so these are reference values, not Mars mission requirements.
+  and studies. Surface gravity is 3.73 m/s² on Mars versus 1.62 m/s² on the Moon (NASA NSSDC
+  fact sheets), and future suits will differ, so these are reference values, not Mars mission
+  requirements.
 - **Resolution.** Slope is computed on the 20 m/px CTX DEM and each ~60 m cell keeps the
   steepest 20 m pixel inside it (conservative). Hazards smaller than 20 m (boulders, small
   scarps, sand ripples) are not resolved. Even with the 15° blocking margin, about 12 % of the
@@ -282,16 +284,20 @@ walkable terrain stays connected as a single area.
 - **Projection.** The DEM is equirectangular with standard parallel 0°, so its pixels are 20 m
   wide only at the equator. The script corrects east–west distances by cos(latitude)
   (~5 % at Jezero) before computing slope.
-- **No live weather exists for Mars.** Conditions are typical values measured by Perseverance
-  MEDA for the season and time of sol, not a forecast. They come from one location on the crater
-  floor and a sample of sols (every 12th sol).
-- **Wind** data are sparse: the MEDA wind sensor was progressively damaged by wind-blown sand from
-  early 2022. Treat wind values with caution.
-- **Radiation is not measured at Jezero.** Perseverance has no ionizing-radiation detector, so the
-  app uses the dose rate measured by Curiosity's RAD in Gale crater (2012–2013) as a reference.
-  Jezero is higher, with less atmosphere overhead, so its dose is expected to be somewhat higher.
-  Solar particle events are not included, and the value is an absorbed dose (µGy), not a
-  biological dose equivalent (Sv).
+- **Conditions are not live.** They are typical values from archived Perseverance MEDA data
+  (NASA PDS) for the season and time of sol, not a forecast. They were measured wherever the rover
+  was on each sol, along its traverse in western Jezero, and use a sample of sols (every 12th).
+- **Wind** covers only part of the mission. MEDA release notes (PDS): "wind data beyond sol 315
+  is not provided due to certain damage to some components of the wind sensor, as a result of
+  harsh weather conditions."
+- **Radiation is not measured at Jezero.** NASA's list of Perseverance science instruments has no
+  radiation detector, so the app uses the dose rate measured by Curiosity's RAD in Gale crater
+  (2012–2013) as a reference. The value at Jezero may differ and is not quantified. Solar
+  particle events are not included, and the value is an absorbed dose (µGy), not a biological
+  dose equivalent (Sv).
+- **Sand.** NASA describes the Séítah area, next to the landing site, as "an exposure of rock and
+  sand" that "was considered too sandy and rocky for a safe landing". Sand is not resolved by the
+  20 m DEM, so the cost grid can mark sandy terrain as walkable.
 - **Dust** is not in the weather summary yet.
 
 ## Data and credits

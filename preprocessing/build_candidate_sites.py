@@ -29,9 +29,28 @@ LAYERS = {
     "mars2020_waypoints": "Jezero Crater Features and Landforms",
     "mastcam_z_waypoints": "Perseverance Landing Site (Mastcam-Z tour)",
 }
-# Proposed habitat: Perseverance landing site, Mastcam-Z tour point 1.
-HABITAT = {"layer": "mastcam_z_waypoints", "name": "Point of Interest (POI) 1"}
+# Perseverance's traverse (NASA Mars Trek feature service). The proposed habitat
+# is the start of the earliest drive in this data set, i.e. where the rover
+# stood after landing. NASA calls the landing site "Octavia E. Butler"
+# (NASA Science, "Perseverance's Route to the Delta").
+TRAVERSE = "https://trek.nasa.gov/mars/trekarcgis/rest/services/Perseverance_Traverse_Path/MapServer/0"
 WALK_BACK_KM = 10.0
+
+# Extra facts from NASA pages, quoted verbatim, keyed by Mars Trek point name.
+NASA_NOTES = {
+    "POI 4": {
+        "quote": "Since February 18, 2021, Perseverance has been exploring the Jezero "
+        "crater floor, including an exposure of rock and sand that the rover’s science "
+        "team calls Séítah (which means “amongst the sand” in the Navajo language). "
+        "[...] the eastern side of Séítah, which itself was considered too sandy and "
+        "rocky for a safe landing. [...] The rocks in Séítah have a very interesting "
+        "composition, and are mostly comprised of the mineral olivine.",
+        "source": "NASA Science, 'Perseverance and the Search Amongst the Sand' (2021-12-22)",
+        "url": "https://science.nasa.gov/blog/perseverance-and-the-search-amongst-the-sand/",
+        "planning_note": "Sand is not resolved by the 20 m DEM: the cost grid can mark "
+        "Séítah as walkable even where NASA describes sandy terrain.",
+    },
+}
 
 
 def get(url):
@@ -84,8 +103,14 @@ def main():
                 "slope_deg": slope,
             })
 
-    hab = next(s for s in sites if s["service_layer"] == HABITAT["layer"]
-               and s["name"] == HABITAT["name"])
+    q = "?where=1%3D1&outFields=sol,SCLK_START&returnGeometry=true&outSR=4326&f=json"
+    drives = json.loads(get(TRAVERSE + "/query" + q))["features"]
+    first = min(drives, key=lambda f: (f["attributes"]["sol"], f["attributes"]["SCLK_START"]))
+    lon0, lat0 = first["geometry"]["paths"][0][0]
+    hab = {"lat": round(lat0, 5), "lon": round(lon0, 5), "first_drive_sol": first["attributes"]["sol"]}
+    for s in sites:
+        if s["name"] in NASA_NOTES:
+            s["nasa_notes"] = NASA_NOTES[s["name"]]
     rad = math.pi / 180
     for s in sites:
         c = (math.sin(hab["lat"] * rad) * math.sin(s["lat"] * rad)
@@ -101,9 +126,15 @@ def main():
             "Jezero bookmarks, checked against the MarsWalk cost grid. Candidates only: "
             "the final choice is made by the Science & content role.",
             "source": "NASA Mars Trek (NASA/JPL), https://trek.nasa.gov/mars/",
-            "services": [SERVICE.format(layer).rsplit("/query", 1)[0] for layer in LAYERS],
-            "proposed_habitat": {"name": hab["name"], "lat": hab["lat"], "lon": hab["lon"],
-                                 "note": "Perseverance landing site (Mastcam-Z tour point 1)"},
+            "services": [SERVICE.format(layer).rsplit("/query", 1)[0] for layer in LAYERS] + [TRAVERSE],
+            "proposed_habitat": {
+                "lat": hab["lat"], "lon": hab["lon"],
+                "note": f"start of Perseverance's earliest drive (sol {hab['first_drive_sol']}) "
+                "in NASA's traverse data, i.e. the landing site, which NASA calls "
+                "'Octavia E. Butler'",
+                "sources": [TRAVERSE,
+                            "https://science.nasa.gov/photojournal/perseverances-route-to-the-delta-2/"],
+            },
             "walk_back_km": WALK_BACK_KM,
             "distance_note": "straight-line distance on the Mars sphere; the walking "
             "route is longer (see web/route.js)",

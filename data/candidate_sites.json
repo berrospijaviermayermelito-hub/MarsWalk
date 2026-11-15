@@ -1,17 +1,21 @@
 {
   "meta": {
-    "generated_utc": "2026-11-15T00:33:21Z",
+    "generated_utc": "2026-11-15T01:33:46Z",
     "description": "Candidate habitat and science stops from NASA Mars Trek Jezero bookmarks, checked against the MarsWalk cost grid. Candidates only: the final choice is made by the Science & content role.",
     "source": "NASA Mars Trek (NASA/JPL), https://trek.nasa.gov/mars/",
     "services": [
       "https://trek.nasa.gov/mars/trekarcgis/rest/services/mars2020_waypoints/MapServer/0",
-      "https://trek.nasa.gov/mars/trekarcgis/rest/services/mastcam_z_waypoints/MapServer/0"
+      "https://trek.nasa.gov/mars/trekarcgis/rest/services/mastcam_z_waypoints/MapServer/0",
+      "https://trek.nasa.gov/mars/trekarcgis/rest/services/Perseverance_Traverse_Path/MapServer/0"
     ],
     "proposed_habitat": {
-      "name": "Point of Interest (POI) 1",
-      "lat": 18.4443,
-      "lon": 77.45077,
-      "note": "Perseverance landing site (Mastcam-Z tour point 1)"
+      "lat": 18.44463,
+      "lon": 77.45089,
+      "note": "start of Perseverance's earliest drive (sol 14) in NASA's traverse data, i.e. the landing site, which NASA calls 'Octavia E. Butler'",
+      "sources": [
+        "https://trek.nasa.gov/mars/trekarcgis/rest/services/Perseverance_Traverse_Path/MapServer/0",
+        "https://science.nasa.gov/photojournal/perseverances-route-to-the-delta-2/"
+      ]
     },
     "walk_back_km": 10.0,
     "distance_note": "straight-line distance on the Mars sphere; the walking route is longer (see web/route.js)"
@@ -27,7 +31,7 @@
       "nasa_summary": "Measuring roughly 49 km in diameter, Jezero Crater formed during Mars’ Noachian period, approximately 4.1 to 3.7 billion years ago. At that time, liquid water flowed openly through channels across the surface of Mars, and pooled in lakes and seas.",
       "grid_status": "walkable",
       "slope_deg": 1.3,
-      "straight_km_from_habitat": 13.48,
+      "straight_km_from_habitat": 13.47,
       "within_walk_back": false
     },
     {
@@ -40,7 +44,7 @@
       "nasa_summary": "This is the targeted landing ellipse for Perseverance. The targeted area for landing takes the form of an ellipse rather than a precise point because of a number of uncertainties that arise in the entry, descent, and landing phase of Perseverance’s journey.",
       "grid_status": "walkable",
       "slope_deg": 1.4,
-      "straight_km_from_habitat": 0.35,
+      "straight_km_from_habitat": 0.34,
       "within_walk_back": true
     },
     {
@@ -53,7 +57,7 @@
       "nasa_summary": "This fan of sedimentary material was deposited by the western inflow channel. It is particularly well preserved, exhibiting a finely layered structure that reveals its having been laid down over a prolonged period of time.",
       "grid_status": "walkable",
       "slope_deg": 1.9,
-      "straight_km_from_habitat": 6.02,
+      "straight_km_from_habitat": 6.01,
       "within_walk_back": true
     },
     {
@@ -66,7 +70,7 @@
       "nasa_summary": "This fan of sedimentary material was deposited by the northern inflow channel. It is not as well defined as the western deposit.",
       "grid_status": "walkable",
       "slope_deg": 4.4,
-      "straight_km_from_habitat": 12.24,
+      "straight_km_from_habitat": 12.22,
       "within_walk_back": false
     },
     {
@@ -105,7 +109,7 @@
       "nasa_summary": "This river channel drained a vast watershed in the uplands extending to the west of Jezero Crater. It entered the crater through a gap in the western rim that is relatively well preserved compared to the northern inflow channel and to the outflow channel to the east.",
       "grid_status": "outside_grid",
       "slope_deg": null,
-      "straight_km_from_habitat": 25.29,
+      "straight_km_from_habitat": 25.27,
       "within_walk_back": false
     },
     {
@@ -118,7 +122,7 @@
       "nasa_summary": "Water that filled the lake in Jezero Crater from its two inflow channels eventually overtopped the crater wall on the southern side, flowing out across the terrain below. But the clearest area of drainage is through this third large channel flowing out of the eastern side of the crater.",
       "grid_status": "outside_grid",
       "slope_deg": null,
-      "straight_km_from_habitat": 72.61,
+      "straight_km_from_habitat": 72.6,
       "within_walk_back": false
     },
     {
@@ -131,7 +135,7 @@
       "nasa_summary": "This introduction to Mastcam-Z and Jezero crater is narrated by Jim Bell, the camera’s Principal Investigator at Arizona State University. Additional information about Mastcam-Z is available at https://mastcamz.asu.edu/ .",
       "grid_status": "walkable",
       "slope_deg": 2.8,
-      "straight_km_from_habitat": 0.0,
+      "straight_km_from_habitat": 0.02,
       "within_walk_back": true
     },
     {
@@ -144,7 +148,7 @@
       "nasa_summary": "While parked in a location referred to as the Van Zyl overlook, Mastcam-Z used its high-definition video capability to capture the monumental first flight of the Ingenuity helicopter. Elsa Jensen from Malin Space Science Systems narrates.",
       "grid_status": "walkable",
       "slope_deg": 1.9,
-      "straight_km_from_habitat": 0.08,
+      "straight_km_from_habitat": 0.07,
       "within_walk_back": true
     },
     {
@@ -157,7 +161,7 @@
       "nasa_summary": "The first successful rock sample collected by Perseverance occurred in this location, but only after the first coring attempt literally came up empty, except for the sample of Martian atmosphere trapped inside the sealed tube. Alicia Vaughan narrates.",
       "grid_status": "walkable",
       "slope_deg": 2.4,
-      "straight_km_from_habitat": 0.88,
+      "straight_km_from_habitat": 0.9,
       "within_walk_back": true
     },
     {
@@ -170,7 +174,13 @@
       "nasa_summary": "The first close-up look at the oldest rocks in Jezero crater visited by Perseverance happened in this spot. Dubbed the Séítah formation, these rocks revealed a geologic story that no one had anticipated.",
       "grid_status": "walkable",
       "slope_deg": 7.9,
-      "straight_km_from_habitat": 0.8,
+      "nasa_notes": {
+        "quote": "Since February 18, 2021, Perseverance has been exploring the Jezero crater floor, including an exposure of rock and sand that the rover’s science team calls Séítah (which means “amongst the sand” in the Navajo language). [...] the eastern side of Séítah, which itself was considered too sandy and rocky for a safe landing. [...] The rocks in Séítah have a very interesting composition, and are mostly comprised of the mineral olivine.",
+        "source": "NASA Science, 'Perseverance and the Search Amongst the Sand' (2021-12-22)",
+        "url": "https://science.nasa.gov/blog/perseverance-and-the-search-amongst-the-sand/",
+        "planning_note": "Sand is not resolved by the 20 m DEM: the cost grid can mark Séítah as walkable even where NASA describes sandy terrain."
+      },
+      "straight_km_from_habitat": 0.82,
       "within_walk_back": true
     },
     {
@@ -196,7 +206,7 @@
       "nasa_summary": "Except for Kodiak mesa looming in the distance, the landscape of the location known as Three Forks is unremarkable. But it is remarkable for the ten scattered sample tubes placed here as insurance if Perseverance can’t deliver its samples to a future sample return rocket.",
       "grid_status": "walkable",
       "slope_deg": 1.8,
-      "straight_km_from_habitat": 2.44,
+      "straight_km_from_habitat": 2.45,
       "within_walk_back": true
     },
     {
