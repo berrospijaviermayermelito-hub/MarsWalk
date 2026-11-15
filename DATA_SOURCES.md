@@ -102,7 +102,7 @@ Details taken from the bundle itself:
 | Source | NASA Mars Trek (NASA/JPL) feature service "Perseverance_Traverse_Path": https://trek.nasa.gov/mars/trekarcgis/rest/services/Perseverance_Traverse_Path/MapServer/0 (332 drive segments, sols 14–1176 at access time) |
 | Usage terms | JPL image and data use policy, https://www.jpl.nasa.gov/imagepolicy: credit line "Courtesy NASA/JPL-Caltech" unless otherwise noted |
 | Accessed | 2026-11-15 |
-| Used for | The proposed habitat is the start of the earliest drive (sol 14), i.e. the landing site, in `data/candidate_sites.json`. NASA names the landing site "Octavia E. Butler" (NASA Science, "Perseverance's Route to the Delta", https://science.nasa.gov/photojournal/perseverances-route-to-the-delta-2/) |
+| Used for | `data/perseverance_traverse.geojson`, `data/traverse_validation.json` and `data/traverse_preview.png` (built by `preprocessing/build_traverse.py`). The proposed habitat is the start of the earliest drive (sol 14), i.e. the landing site, in `data/candidate_sites.json`. NASA names the landing site "Octavia E. Butler" (NASA Science, "Perseverance's Route to the Delta", https://science.nasa.gov/photojournal/perseverances-route-to-the-delta-2/) |
 
 ### NASA Mars Trek Jezero points of interest (candidate science stops)
 
