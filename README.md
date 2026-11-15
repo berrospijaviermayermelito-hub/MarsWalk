@@ -413,6 +413,7 @@ NASA Space Apps asks teams to state where and how AI tools were used. MarsWalk u
   checked against the source listed in DATA_SOURCES.md.
 - **Images, video and audio:** none were generated with AI.
 - **Web app (`web/`):** AI use to be stated by its authors before submission.
+- **Route planner (web/route.js):** written with Claude's help (Anthropic) and tested against the real cost grid; reviewed by the route author.
 
 ## Data and credits
 
