@@ -98,13 +98,13 @@ read these files; sample or illustrative values must not be shown.
 | Frontend | Mars radius 3,396.19 km | PR #6 |
 | Frontend | Spanish `docs/INFORME.md` removed, `docs/FRONTEND.md` translated | PR #6 |
 | Route | Default speed 3.4 km/h; README section and AI-use line for `web/route.js` | PR #7 |
+| Frontend | AI use of `web/` stated in the README "Use of AI" and in an `ai-assistance` meta tag | PR #10 |
 | Data & GIS | GitHub Pages published from `main`: https://berrospijaviermayermelito-hub.github.io/MarsWalk/web/ | Repository settings |
 
 ### Still open
 
 | Owner | Item |
 |---|---|
-| Frontend | State the AI use for `web/` (except `route.js`) in the README "Use of AI" section. |
 | Science | Confirm or add a `task` for each stop (sourced), and pick one Perseverance photo per stop with its image ID and exact credit. |
 | Science | The CRISM references for clays and carbonates (Goudge et al. 2015, Horgan et al. 2020) are not verified yet; verify them or do not use them. |
 | Pitch | 30-second video or ≤ 7 slides, in English or with English subtitles; AI images watermarked; no NASA logo. |
