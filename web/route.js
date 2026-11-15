@@ -44,7 +44,7 @@ class MinHeap {
   }
 }
 
-// options: walkBackKm (default 10), speedKmh (default 3.3). Values and sources: repo README.
+// options: walkBackKm (default 10), speedKmh (default 3.4). Values and sources: repo README / docs/TEAM_RULES.md.
 function createPlanner(costGrid, heightsGrid, options = {}) {
   const m = costGrid.meta;
   const cols = m.cols, rows = m.rows;
@@ -56,7 +56,7 @@ function createPlanner(costGrid, heightsGrid, options = {}) {
   const slope = costGrid.slope_deg;
   const heights = heightsGrid ? heightsGrid.heights_m : null;
   const walkBackKm = options.walkBackKm !== undefined ? options.walkBackKm : 10;
-  const speedKmh = options.speedKmh !== undefined ? options.speedKmh : 3.3;
+  const speedKmh = options.speedKmh !== undefined ? options.speedKmh : 3.4;
 
   const idx = (x, y) => y * cols + x;
   const inside = (x, y) => x >= 0 && y >= 0 && x < cols && y < rows;
@@ -192,6 +192,8 @@ function createPlanner(costGrid, heightsGrid, options = {}) {
   // Multi-stop route: points = [start, stop1, stop2, ...], each { lon, lat }.
   // Plans one leg per consecutive pair and joins them into a single route.
   // Used for the science-stops route (habitat -> A -> B -> C).
+  // If the last point is the habitat again (a loop: habitat -> A -> B -> C -> habitat), distance_km and
+  // time_h already include the way back. Ignore round_trip_* in that case: it doubles the distance.
   function planVia(points, habitat) {
     if (!points || points.length < 2) return { ok: false, reason: 'need_at_least_two_points' };
     const legs = [];

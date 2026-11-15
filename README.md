@@ -232,7 +232,7 @@ change to the cost grid with `python preprocessing/build_overlays.py`.
 
 ### 4. Route, conditions and radiation
 
-- **Route:** `web/route.js` (branch `ruta-astar`) loads `cost_grid.json` and `heights.json` with
+- **Route:** `web/route.js` loads `cost_grid.json` and `heights.json` with
   `MarsRoute.loadPlanner("../data")` and returns the path, distance, time and elevation profile.
 - **Conditions:** pick the `ls_bins` entry for the season and index `hourly.<variable>` by local
   hour in `data/meda_summary.json`. Show `null` as "no data" (wind is missing in most seasons).
@@ -276,6 +276,54 @@ blocked if `s > s_block` (`d` = distance, `s` = slope in degrees, `r` = roughnes
 | `vel_kmh` | 3.4 km/h | Cavagna, Willems & Heglund (1998), "Walking on Mars", *Nature* 393, 636, doi:10.1038/31374: "The optimal walking speed on Mars will be 3.4 km h-1 (down from 5.5 km h-1 on Earth)". Measured without a spacesuit in reduced-gravity flights |
 | `eva_limit_h` | 6 h | Scoville (NASA NTRS 20210026296), slide 4: "Nominal EVA excursion is 6 hours +/- 2 hours" (Artemis, Moon) |
 | `w_p`, `w_r` | 1.0, 1.0 | Team empirical tuning (assumed values for the demo) |
+
+## Route planner (`web/route.js`)
+
+`web/route.js` computes the safest walking route on the cost grid. It runs in the browser and
+needs no server. It reads `data/cost_grid.json` and `data/heights.json`.
+
+**How it works**
+
+- **Algorithm:** A* with 8 directions. Blocked cells (`cost = -1`) are never entered, and a
+  diagonal step cannot cut the corner of a blocked cell.
+- **Step cost:** real distance in km (cells are not square: east-west and north-south sizes come
+  from `cell_size_m`) multiplied by the average cost of the two cells.
+- **Heuristic:** straight-line distance in km. It never overestimates, because the lowest cell
+  cost is 1.
+- **Blocked clicks:** if a point falls on a blocked cell, it is moved to the nearest free cell
+  (up to 10 cells away) and reported as snapped.
+- **Time:** distance divided by `vel_kmh` (3.4 km/h by default). Time spent at the stops is not
+  included.
+- **Walk-back alert:** raised when any point of the route is farther than `walk_back_km`
+  (10 km) from the habitat.
+
+**Using it**
+
+```js
+await MarsWalkRoute.init("../data", { speedKmh: 3.4, walkBackKm: 10 });
+const r = MarsWalkRoute.findPathVia([habitat, stopA, stopB, stopC, habitat], habitat); // [lat, lng] points
+```
+
+- `findPath(start, end, habitat)` plans one leg and `findPathVia(points, habitat)` joins several.
+- On success, `r.blocked` is `false` and the result has `path` (`[lat, lng]` points),
+  `distance_km`, `time_h`, `elevations_m`, `max_slope_deg`, `max_distance_from_habitat_km`
+  and `exceeds_walk_back`.
+- On failure, `r.blocked` is `true` and `r.reason` is one of `start_outside_area`,
+  `end_outside_area`, `habitat_outside_area`, `start_blocked`, `end_blocked`, `no_route` or
+  `need_at_least_two_points`. For several legs, `r.failed_leg` says which one failed.
+- Self-test: run `node route.js` from the `web/` folder.
+
+**Limitations**
+
+- The walk-back limit uses the straight-line distance from the habitat, matching the 10 km circle
+  on the map. The real walking distance can be longer when the route goes around obstacles.
+- `time_h` is walking time only. `round_trip_*` fields double the distance and are meant for an
+  out-and-back route, not for a loop that already returns to the habitat.
+- The route is only as good as the grid: it inherits the 20 m CTX resolution, and about 12 % of
+  the cells that HiRISE shows as steeper than 20° still pass the 15° block (see *Slope
+  validation*). It does not model sand, boulders or the spacesuit. It is a planning aid, not a
+  guarantee.
+
 
 ## Slope validation
 
@@ -367,6 +415,7 @@ NASA Space Apps asks teams to state where and how AI tools were used. MarsWalk u
   checked against the source listed in DATA_SOURCES.md.
 - **Images, video and audio:** none were generated with AI.
 - **Web app (`web/`):** AI use to be stated by its authors before submission.
+- **Route planner (web/route.js):** written with Claude's help (Anthropic) and tested against the real cost grid; reviewed by the route author.
 
 ## Data and credits
 
