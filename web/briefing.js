@@ -162,10 +162,52 @@
     card.hidden = false;
   }
 
+  var current = { photo: null };
+
+  /** Full-screen panorama viewer: the same image, uncropped, panned by drag, wheel or arrow keys. */
+  function openPano() {
+    var photo = current.photo;
+    if (!photo) return;
+    var img = $("pano-img"), pano = $("pano");
+    $("pano-title").textContent = photo.title;
+    img.alt = photo.title;
+    img.title = photo.description || photo.title;
+    var cap = $("pano-caption");
+    cap.textContent = $("brief-photo-caption").textContent;
+    if (photo.source_url) cap.href = photo.source_url; else cap.removeAttribute("href");
+    img.onload = function () {
+      // Fill the viewer height, but never enlarge the file more than 2x.
+      img.style.height = Math.min(window.innerHeight * (window.innerWidth < 800 ? 0.5 : 0.65), img.naturalHeight * 2) + "px";
+      pano.scrollLeft = (pano.scrollWidth - pano.clientWidth) / 2;
+    };
+    img.src = $("brief-photo-img").src;
+    MW.ui.openModal("photo-modal");
+    pano.focus();
+  }
+
+  (function setupPano() {
+    var pano = $("pano"), drag = null;
+    $("brief-photo-open").addEventListener("click", openPano);
+    pano.addEventListener("pointerdown", function (e) {
+      drag = { x: e.clientX, left: pano.scrollLeft }; pano.setPointerCapture(e.pointerId); pano.classList.add("dragging");
+    });
+    pano.addEventListener("pointermove", function (e) { if (drag) pano.scrollLeft = drag.left - (e.clientX - drag.x); });
+    ["pointerup", "pointercancel"].forEach(function (t) {
+      pano.addEventListener(t, function () { drag = null; pano.classList.remove("dragging"); });
+    });
+    pano.addEventListener("wheel", function (e) {
+      if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) { pano.scrollLeft += e.deltaY; e.preventDefault(); }
+    }, { passive: false });
+    pano.addEventListener("keydown", function (e) {
+      if (e.key === "ArrowLeft") pano.scrollLeft -= pano.clientWidth / 4;
+      else if (e.key === "ArrowRight") pano.scrollLeft += pano.clientWidth / 4;
+    });
+  })();
+
   /** NASA photo of the stop (data/stops.json → photo). Only text from its fields. */
   function showPhoto(photo) {
     var fig = $("brief-photo"), img = $("brief-photo-img");
-    if (!photo || !photo.path) { fig.hidden = true; img.removeAttribute("src"); return; }
+    if (!photo || !photo.path) { current.photo = null; fig.hidden = true; img.removeAttribute("src"); return; }
     var caption = photo.title +
       (photo.instrument ? " · " + photo.instrument : "") +
       (photo.sols && photo.sols.length ? ", sol " + photo.sols.join(", ") : "") +
@@ -174,7 +216,7 @@
     img.alt = photo.title;
     img.title = photo.description || photo.title;
     img.src = "../" + photo.path;
-    $("brief-photo-link").href = photo.source_url || img.src;
+    current.photo = photo;
     var cap = $("brief-photo-caption");
     cap.textContent = caption;
     if (photo.source_url) cap.href = photo.source_url; else cap.removeAttribute("href");

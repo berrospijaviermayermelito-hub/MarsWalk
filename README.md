@@ -435,7 +435,8 @@ NASA Space Apps asks teams to state where and how AI tools were used. MarsWalk u
   the app only displays the files in `data/` and the route parameters listed in DATA_SOURCES.md,
   and the time at each stop is a user input. The stop photo in the briefing card (image, title,
   instrument, sols and credit, all read from `photo` in `data/stops.json`) was also added with
-  Claude Code; the AI wrote no text about the photos.
+  Claude Code, as was the drag-to-pan viewer that opens the same photo uncropped; the AI wrote no
+  text about the photos.
 - **Route planner (`web/route.js`):** written with Claude's help (Anthropic) and tested against the real cost grid; reviewed by the route author.
 
 ## Data and credits

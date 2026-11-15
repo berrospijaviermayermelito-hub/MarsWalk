@@ -115,7 +115,7 @@
       <div class="brief-head"><span class="stop-badge" id="brief-id"></span><h2 id="brief-name"></h2></div>
       <p class="brief-meta" id="brief-meta"></p>
       <figure class="brief-photo" id="brief-photo" hidden>
-        <a id="brief-photo-link" target="_blank" rel="noopener"><img id="brief-photo-img" alt="" /></a>
+        <button class="photo-open" id="brief-photo-open" aria-label="Open panorama viewer"><img id="brief-photo-img" alt="" /><span class="photo-hint">⤢ Explore panorama</span></button>
         <figcaption><a id="brief-photo-caption" target="_blank" rel="noopener"></a></figcaption>
       </figure>
       <p class="brief-section">Why go? </p>
@@ -125,6 +125,18 @@
       <p class="brief-eva" id="brief-eva"></p>
     </article>
   </main>
+</div>
+
+<!-- ─── Panorama viewer ─────────────────────────────────────── -->
+<div class="modal" id="photo-modal" hidden>
+  <div class="modal-backdrop" data-close="photo-modal"></div>
+  <div class="modal-box pano-box" role="dialog" aria-labelledby="pano-title">
+    <button class="close" data-close="photo-modal" aria-label="Close">×</button>
+    <h2 id="pano-title"></h2>
+    <div class="pano" id="pano" tabindex="0" aria-label="Panorama: drag or use the arrow keys to look around"><img id="pano-img" alt="" draggable="false" /></div>
+    <p class="caption">Drag, scroll sideways or use the arrow keys to look around. Partial panorama, shown uncropped – not a 360° view.</p>
+    <p class="caption"><a id="pano-caption" target="_blank" rel="noopener"></a></p>
+  </div>
 </div>
 
 <!-- ─── Data sources modal ──────────────────────────────────── -->
