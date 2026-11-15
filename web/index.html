@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MarsWalk – Jezero EVA Planner</title>
+  <meta name="description" content="Plan a safe Mars walk (EVA) over Jezero crater using layered data from multiple NASA missions." />
+
+  <!-- Leaflet 1.9.4 (BSD-2-Clause) -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+          integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  <!-- Chart.js 4.4.1 (MIT) -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<div id="app">
+
+  <!-- ─── Sidebar ──────────────────────────────────────────── -->
+  <aside id="sidebar">
+    <header>
+      <h1><span>Mars</span>Walk</h1>
+      <p class="tagline">Plan a safe Mars walk over Jezero crater – where to go, when to go, and why.</p>
+    </header>
+
+    <section>
+      <p class="section-label">Status</p>
+      <div class="card" id="status-box">
+        <div class="status-row"><span class="dot loading" id="dot-tiles"></span><span id="lbl-tiles">Loading base map…</span></div>
+        <div class="status-row"><span class="dot loading" id="dot-data"></span><span id="lbl-data">Loading data…</span></div>
+        <div class="status-row"><span class="dot loading" id="dot-route"></span><span id="lbl-route">Computing route…</span></div>
+      </div>
+      <div id="error-banner" role="alert"></div>
+    </section>
+
+    <section>
+      <p class="section-label">EVA plan · Where?</p>
+      <div class="card" id="route-info">
+        <dl>
+          <dt>Distance</dt><dd id="val-distance">—</dd>
+          <dt>Estimated EVA time</dt><dd id="val-time">—</dd>
+          <dd class="sub" id="val-time-detail"></dd>
+          <dt>Science</dt><dd id="val-stops">—</dd>
+        </dl>
+        <div class="bar"><div class="bar-fill green" id="eva-bar" style="width:0"></div></div>
+        <p class="bar-label" id="eva-bar-label"></p>
+        <ul class="checks" id="safety-checks"></ul>
+        <button class="btn primary" id="btn-eva-start" disabled>▶ Start EVA</button>
+        <div id="eva-controls" hidden>
+          <p class="eva-step" id="eva-step"></p>
+          <p class="eva-progress" id="eva-progress"></p>
+          <div class="btn-row">
+            <button class="btn" id="btn-eva-prev">◀ Back</button>
+            <button class="btn primary" id="btn-eva-next">Next ▶</button>
+            <button class="btn ghost" id="btn-eva-end">End</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <p class="section-label">Elevation profile</p>
+      <div class="card">
+        <div class="chart-wrap"><canvas id="profile-canvas" hidden></canvas>
+          <p class="empty" id="profile-empty">Loading…</p></div>
+        <p class="bar-label" id="profile-stats"></p>
+      </div>
+    </section>
+
+    <section>
+      <p class="section-label">Conditions · When?</p>
+      <div class="card" id="traffic-light">
+        <p class="empty" id="cond-loading">Loading conditions…</p>
+        <div id="cond-body" hidden>
+          <div class="selects">
+            <label>Season <select id="sel-season"></select></label>
+            <label>Local time <select id="sel-hour"></select></label>
+          </div>
+          <div class="lights">
+            <div class="bulb" data-lvl="green"></div>
+            <div class="bulb" data-lvl="amber"></div>
+            <div class="bulb" data-lvl="red"></div>
+          </div>
+          <p class="verdict" id="cond-verdict"></p>
+          <ul class="factors" id="cond-factors"></ul>
+          <p class="caption">Typical conditions for this season and hour – not live weather (MEDA data is released in batches).</p>
+          <p class="caption" id="cond-source"></p>
+          <span class="tag assumed" id="cond-sample" hidden>Sample data</span>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <p class="section-label">Safety parameters</p>
+      <div class="card"><ul class="params" id="params"></ul></div>
+    </section>
+
+    <footer class="credit">
+      <button class="link-btn" id="btn-sources">Data sources (NASA missions) →</button>
+      <p>Map tiles: NASA/JPL/USGS Mars Trek. Built for NASA Space Apps Challenge 2026.</p>
+    </footer>
+  </aside>
+
+  <!-- ─── Map ──────────────────────────────────────────────── -->
+  <main id="map-wrap">
+    <div id="map" aria-label="Map of Jezero crater"></div>
+
+    <article id="briefing-card" hidden>
+      <button class="close" id="brief-close" aria-label="Close briefing">×</button>
+      <div class="brief-head"><span class="stop-badge" id="brief-id"></span><h2 id="brief-name"></h2></div>
+      <p class="brief-meta" id="brief-meta"></p>
+      <p class="brief-section">Why go? </p>
+      <p id="brief-text"></p>
+      <div id="brief-task-row"><p class="brief-section">Task</p><p id="brief-task"></p></div>
+      <a id="brief-link" target="_blank" rel="noopener">Scientific source →</a>
+      <p class="brief-eva" id="brief-eva"></p>
+    </article>
+  </main>
+</div>
+
+<!-- ─── Data sources modal ──────────────────────────────────── -->
+<div class="modal" id="sources-modal" hidden>
+  <div class="modal-backdrop" data-close="sources-modal"></div>
+  <div class="modal-box" role="dialog" aria-labelledby="sources-title">
+    <button class="close" data-close="sources-modal" aria-label="Close">×</button>
+    <h2 id="sources-title">Data sources</h2>
+    <p>MarsWalk combines data from several NASA missions. Full citations and licenses are listed in DATA_SOURCES.md in the repository.</p>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Data</th><th>Mission</th><th>Instrument</th><th></th></tr></thead>
+        <tbody id="sources-list"></tbody>
+      </table>
+    </div>
+    <p class="caption">Values tagged "assumed" are placeholders for the demo until a published source is cited.</p>
+  </div>
+</div>
+
+<script src="config.js"></script>
+<script src="sample-data.js"></script>
+<script src="ui.js"></script>
+<script src="map.js"></script>
+<script src="profile.js"></script>
+<script src="briefing.js"></script>
+<!-- route.js (A* planner, route team) exposes window.MarsWalkRoute.findPath when ready. -->
+<script src="route.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

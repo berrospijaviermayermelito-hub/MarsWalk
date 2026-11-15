@@ -22,16 +22,19 @@ import argparse
 import csv
 import io
 import json
+import re
 import math
 import ssl
 import sys
 import urllib.error
 import urllib.request
 from concurrent.futures import ThreadPoolExecutor
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 from pathlib import Path
 
 import numpy as np
+
+from ai_disclosure import AI_ASSISTANCE
 
 REPO = Path(__file__).resolve().parent.parent
 BASE = "https://atmos.nmsu.edu/PDS/data/PDS4/Mars2020/mars2020_meda"
@@ -42,7 +45,9 @@ SOL_GROUPS = [(0, 89), (90, 179), (180, 299)] + [
 # (collection, sensor tag in the file name, {output name: [CSV columns]})
 # Several columns for one output are combined with the median per sample.
 PRODUCTS = [
-    # Air temperature sensors 1-3 sit on the mast at ~1.45 m above the ground.
+    # Air temperature sensors (ATS) 1-3, mounted on the Remote Sensing Mast (RSM);
+    # ATS 4-5 are on the rover body (MEDA RDR SIS, PDS document collection).
+    # Median of the three per sample.
     (
         "data_calibrated_env",
         "CAL_ATS_________________",
@@ -62,45 +67,6 @@ VALID_RANGE = {
 
 LS_BIN_DEG = 30
 SEASONS = ["Northern spring", "Northern summer", "Northern autumn", "Northern winter"]
-
-# Perseverance landed 2021-02-18 20:55 UTC (sol 0). One sol = 88775.244 s.
-LANDING_UTC = datetime(2021, 2, 18, 20, 55, tzinfo=timezone.utc)
-SOL_SECONDS = 88775.244
-
-
-def solar_longitude(when_utc):
-    """Areocentric solar longitude Ls (deg), Allison & McEwen (2000), as used
-    by NASA GISS Mars24."""
-    jd_utc = when_utc.timestamp() / 86400.0 + 2440587.5
-    dt = jd_utc + 69.184 / 86400.0 - 2451545.0  # TT days since J2000
-    m = math.radians(19.3871 + 0.52402073 * dt)
-    alpha_fms = 270.3871 + 0.524038496 * dt
-    pbs = sum(
-        a * math.cos(math.radians(0.985626 * dt / tau + phi))
-        for a, tau, phi in (
-            (0.0071, 2.2353, 49.409),
-            (0.0057, 2.7543, 168.173),
-            (0.0039, 1.1177, 191.837),
-            (0.0037, 15.7866, 21.736),
-            (0.0021, 2.1354, 15.704),
-            (0.0020, 2.4694, 95.528),
-            (0.0018, 32.8493, 49.095),
-        )
-    )
-    eoc = (
-        (10.691 + 3.0e-7 * dt) * math.sin(m)
-        + 0.623 * math.sin(2 * m)
-        + 0.050 * math.sin(3 * m)
-        + 0.005 * math.sin(4 * m)
-        + 0.0005 * math.sin(5 * m)
-        + pbs
-    )
-    return (alpha_fms + eoc) % 360.0
-
-
-def sol_to_ls(sol):
-    return solar_longitude(LANDING_UTC + timedelta(seconds=(sol + 0.5) * SOL_SECONDS))
-
 
 def ssl_context():
     """The PDS node's certificate chains to a root that some system trust
@@ -143,6 +109,23 @@ def find_file(collection, tag, sol):
     return url + names[-1] if names else None
 
 
+def label_ls(sol):
+    """Mean solar longitude (deg) of a sol, from the official PDS4 label of the
+    derived pressure product (mars2020:start/stop_solar_longitude)."""
+    url = find_file("data_derived_env", "DER_PS__________________", sol)
+    if url is None:
+        return None
+    xml = http_get(url[: -len(".CSV")] + ".xml")
+    vals = [float(v) for v in re.findall(
+        r"<mars2020:(?:start|stop)_solar_longitude[^>]*>([-0-9.]+)<", xml)]
+    if len(vals) != 2:
+        return None
+    a, b = vals
+    if b < a:  # wrapped past 360 deg during the sol
+        b += 360.0
+    return round(((a + b) / 2) % 360.0, 3)
+
+
 def hourly_means(text, columns_by_var):
     """Mean per local true solar hour (0-23) for each output variable."""
     sums = {v: np.zeros(24) for v in columns_by_var}
@@ -181,8 +164,12 @@ def process_sol(sol, cache_dir):
     """Download one sol, reduce it to hourly means and cache the result."""
     cache = cache_dir / f"sol_{sol:04d}.json"
     if cache.exists():
-        return json.loads(cache.read_text())
-    record = {"sol": sol, "ls": round(sol_to_ls(sol), 2), "files": []}
+        record = json.loads(cache.read_text())
+        if record.get("ls_source") != "pds_label":
+            record["ls"], record["ls_source"] = label_ls(sol), "pds_label"
+            cache.write_text(json.dumps(record))
+        return record
+    record = {"sol": sol, "ls": label_ls(sol), "ls_source": "pds_label", "files": []}
     for collection, tag, columns_by_var in PRODUCTS:
         url = find_file(collection, tag, sol)
         if url is None:
@@ -214,7 +201,7 @@ def summarize(records):
     bins = []
     for b in range(n_bins):
         ls0 = b * LS_BIN_DEG
-        recs = [r for r in records if ls0 <= r["ls"] < ls0 + LS_BIN_DEG]
+        recs = [r for r in records if r.get("ls") is not None and ls0 <= r["ls"] < ls0 + LS_BIN_DEG]
         hourly = {}
         for var in VARIABLES:
             per_hour = []
@@ -237,11 +224,6 @@ def summarize(records):
 
 
 def self_test():
-    # Perseverance landed at Ls ~5 deg (Mars year 36); northern summer
-    # solstice (Ls 90) of MY 36 was on 2021-08-25.
-    assert abs(sol_to_ls(0) - 5.6) < 1.0, sol_to_ls(0)
-    ls = solar_longitude(datetime(2021, 8, 25, 12, tzinfo=timezone.utc))
-    assert abs(ls - 90.0) < 1.0, ls
     text = "SCLK,LMST,LTST,PRESSURE\n" + "".join(
         f"{i},x,0001 05:00:00,{700 + (i % 2)}\n" for i in range(400)
     ) + "1,x,0001 06:00:00,999999999\n"
@@ -271,7 +253,7 @@ def main():
     records = []
     with ThreadPoolExecutor(args.workers) as pool:
         for i, rec in enumerate(pool.map(lambda s: process_sol(s, args.cache_dir), sols), 1):
-            if rec["files"]:
+            if rec["files"] and rec.get("ls") is not None:
                 records.append(rec)
             if i % 20 == 0:
                 print(f"  {i}/{len(sols)} sols done")
@@ -280,6 +262,7 @@ def main():
 
     out = {
         "meta": {
+            "ai_assistance": AI_ASSISTANCE,
             "generated_utc": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
             "description": "Typical conditions at Jezero crater measured by "
             "Perseverance MEDA, by season (solar longitude Ls) and local true "
@@ -292,18 +275,20 @@ def main():
             "sampling": f"every {args.step}th sol; hourly means of 1 Hz data, "
             "then median and 10th/90th percentiles across sols in each bin",
             "ls_bin_deg": LS_BIN_DEG,
-            "ls_method": "Allison & McEwen (2000), evaluated at mid-sol",
+            "ls_method": "mean of mars2020:start_solar_longitude and stop_solar_longitude "
+            "in the official PDS4 label of each sol's derived pressure product",
             "hour_convention": "index 0-23 = local true solar time (LTST) hour",
             "variables": {
-                "air_temp_c": "air temperature at ~1.45 m (ATS sensors 1-3, calibrated), deg C",
+                "air_temp_c": "air temperature, median of air temperature sensors 1-3 on the Remote Sensing Mast (ATS, calibrated), deg C",
                 "ground_temp_c": "ground brightness temperature (TIRS, calibrated), deg C",
                 "pressure_pa": "atmospheric pressure (PS, derived), Pa",
-                "wind_speed_ms": "horizontal wind speed at ~1.5 m (WS, derived), m/s",
+                "wind_speed_ms": "horizontal wind speed (WS, derived), m/s",
             },
             "caveats": [
-                "The wind sensor was progressively damaged by wind-blown sand "
-                "from early 2022; wind values cover few sols and need caution.",
-                "Temperatures can be affected by the rover's own heat.",
+                "MEDA release notes (PDS): 'wind data beyond sol 315 is not "
+                "provided due to certain damage to some components of the wind "
+                "sensor, as a result of harsh weather conditions.' Wind values "
+                "therefore cover only part of the mission.",
                 "A null entry means fewer than 3 sampled sols had data for that "
                 "bin and hour.",
             ],
