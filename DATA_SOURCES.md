@@ -37,6 +37,23 @@ Licenses and usage terms are quoted from the publisher's own pages, checked on t
 | Accessed | 2026-11-14 (usage terms checked 2026-11-15) |
 | Used for | Base imagery in the web app. A local backup of 930 tiles (zoom 0–13, 28.6 MB) is in `data/tiles/`, downloaded by `preprocessing/download_trek_tiles.py`, in case Mars Trek is unavailable |
 
+### Other NASA Mars Trek map layers shown in the web app
+
+All served by NASA Mars Trek (NASA/JPL) as WMTS, https://trek.nasa.gov/tiles/Mars/EQ/{layer}/1.0.0/WMTSCapabilities.xml.
+Titles, missions and instruments are the ones in the Mars Trek catalog (checked 2026-11-15).
+Usage terms: JPL image and data use policy, https://www.jpl.nasa.gov/imagepolicy, credit line
+"Courtesy NASA/JPL-Caltech" unless otherwise noted.
+
+| Mars Trek title | Layer id | Mission / instrument |
+|---|---|---|
+| MRO HiRISE, Jezero Mosaic, Controlled | `JEZ_hirise_soc_006_orthoMosaic_25cm_Eqc_latTs0_lon0_first_dd` | Mars Reconnaissance Orbiter / HiRISE |
+| Viking VIS, Global Color Mosaic | `Mars_Viking_MDIM21_ClrMosaic_global_232m` | Viking / MDIM21 |
+| MGS MOLA, Global Color Hillshade | `Mars_MGS_MOLA_ClrShade_merge_global_463m` | Mars Global Surveyor / MOLA |
+| MO THEMIS-IR Night, Global Mosaic | `THEMIS_NightIR_ControlledMosaics_100m_v2_oct2018` | Mars Odyssey / THEMIS |
+
+`web/tiles/ctx/` is a second local copy of the CTX Jezero tiles, made by the frontend with
+`web/tools/fetch_fallback_tiles.py` (same source as `data/tiles/`).
+
 ### Mars 2020 Terrain Relative Navigation HiRISE DTM, tile Jezero_C (validation only)
 
 | | |
@@ -147,6 +164,19 @@ and complete its URL, usage terms and access date when it is added.
 
 The slope, walk-back and EVA-duration references concern the Moon (Apollo or Artemis). The walking speed is for Mars gravity but without a spacesuit.
 
+## Not verified (do not use until verified)
+
+Found in earlier drafts. They may be correct, but nobody on the team has checked them against
+the source yet, so they must not appear in the app, briefings or pitch until they are verified
+and moved to the sections above.
+
+| Reference | Used for in the drafts |
+|---|---|
+| Hassler, D. M. et al. (2014), *Science* 343, doi:10.1126/science.1244797 (0.64 mSv/day) | Radiation dose equivalent. The app uses the verified NASA value of about 210 µGy/day instead |
+| Goudge, T. A. et al. (2015), *JGR Planets*, doi:10.1002/2014JE004782 | Fe/Mg smectite clays in the delta (CRISM) |
+| Horgan, B. H. N. et al. (2020), *Icarus* 339, doi:10.1016/j.icarus.2019.113526 | Marginal carbonates (CRISM) |
+| https://mars.nasa.gov/mars2020/mission/science/landing-site/ | Landing site overview |
+
 ## Software
 
 Licenses as declared in each package's metadata (versions used for preprocessing).
@@ -156,4 +186,6 @@ Licenses as declared in each package's metadata (versions used for preprocessing
 | NumPy | 2.5.3 | BSD-3-Clause AND 0BSD AND MIT AND Zlib AND CC0-1.0 | Preprocessing |
 | Rasterio | 1.5.2 | BSD-3-Clause | Preprocessing |
 | certifi | 2026.10.18 | MPL-2.0 | Preprocessing (TLS root certificates for the PDS download) |
+| Leaflet | 1.9.4 | BSD-2-Clause (npm package metadata) | Web app: map |
+| Chart.js | 4.4.1 | MIT (npm package metadata) | Web app: elevation profile |
 | Matplotlib | 3.11.2 | Matplotlib license (classified as OSI Approved :: Python Software Foundation License) | Preprocessing preview and overlays |

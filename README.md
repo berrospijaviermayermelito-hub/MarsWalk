@@ -17,6 +17,33 @@ One screen answers three questions for a human explorer:
 > Status: work in progress. The data layer is done (terrain cost grid, heights, slope validation,
 > typical weather and offline map tiles); the web app is under construction.
 
+## Run locally
+
+No build step. Serve the repository root with any static server and open `web/`:
+
+```bash
+python3 -m http.server 8000
+```
+
+Then open http://localhost:8000/web/ in a browser. Opening `web/index.html` directly does not
+work: the browser blocks loading the files in `data/`.
+
+## Web app structure
+
+```
+web/              frontend (Leaflet + Chart.js, plain JavaScript)
+  config.js       parameters, layers and data sources shown in the app
+  map.js          map, Mars CRS, layers, route drawing, safety checks
+  briefing.js     route summary, conditions, stop briefings, EVA mode
+  profile.js      elevation profile
+  app.js          boot sequence
+  ui.js           shared UI helpers
+  route.js        A* route planner (route team)
+  sample-data.js  placeholder values, to be removed (see docs/TEAM_RULES.md)
+  tiles/          local fallback copy of CTX tiles (frontend)
+  tools/          fetch_fallback_tiles.py
+```
+
 ## How it works
 
 Static site, no backend. Heavy NASA data is processed once in Python and saved as light JSON
