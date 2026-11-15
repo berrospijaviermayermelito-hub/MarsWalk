@@ -421,7 +421,9 @@ NASA Space Apps asks teams to state where and how AI tools were used. MarsWalk u
   (`docs/FRONTEND.md`, `docs/AGENTS.md`) were written with Claude Code (Anthropic) and reviewed and
   tested in the browser by the frontend author. The AI did not supply any value shown on screen:
   the app only displays the files in `data/` and the route parameters listed in DATA_SOURCES.md,
-  and the time at each stop is a user input.
+  and the time at each stop is a user input. The stop photo in the briefing card (image, title,
+  instrument, sols and credit, all read from `photo` in `data/stops.json`) was also added with
+  Claude Code; the AI wrote no text about the photos.
 - **Route planner (`web/route.js`):** written with Claude's help (Anthropic) and tested against the real cost grid; reviewed by the route author.
 
 ## Data and credits

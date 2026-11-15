@@ -157,8 +157,28 @@
     var link = $("brief-link");
     link.hidden = !stop.source_url;
     if (stop.source_url) link.href = stop.source_url;
+    showPhoto(stop.photo);
     $("brief-eva").textContent = evaInfo || "";
     card.hidden = false;
+  }
+
+  /** NASA photo of the stop (data/stops.json → photo). Only text from its fields. */
+  function showPhoto(photo) {
+    var fig = $("brief-photo"), img = $("brief-photo-img");
+    if (!photo || !photo.path) { fig.hidden = true; img.removeAttribute("src"); return; }
+    var caption = photo.title +
+      (photo.instrument ? " · " + photo.instrument : "") +
+      (photo.sols && photo.sols.length ? ", sol " + photo.sols.join(", ") : "") +
+      " · Credit: " + photo.credit;
+    img.onerror = function () { fig.hidden = true; console.warn("Stop photo not found:", photo.path); };
+    img.alt = photo.title;
+    img.title = photo.description || photo.title;
+    img.src = "../" + photo.path;
+    $("brief-photo-link").href = photo.source_url || img.src;
+    var cap = $("brief-photo-caption");
+    cap.textContent = caption;
+    if (photo.source_url) cap.href = photo.source_url; else cap.removeAttribute("href");
+    fig.hidden = false;
   }
 
   // ── Guided EVA mode ──────────────────────────────────────────────────
