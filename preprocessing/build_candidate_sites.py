@@ -24,6 +24,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from ai_disclosure import AI_ASSISTANCE
+from fetch_stop_photos import STOP_PHOTOS, photo_path
 
 REPO = Path(__file__).resolve().parent.parent
 SERVICE = "https://trek.nasa.gov/mars/trekarcgis/rest/services/{}/MapServer/0/query"
@@ -188,13 +189,19 @@ def main():
             "perseverance_drive_sols_within_150m": s["perseverance_drive_sols_within_150m"],
         }
         stop.update(extra)
+        if sid in STOP_PHOTOS:
+            photo = {k: v for k, v in STOP_PHOTOS[sid].items() if k != "image_url"}
+            photo["path"] = photo_path(sid)
+            photo["original_image_url"] = STOP_PHOTOS[sid]["image_url"]
+            photo["note"] = "Resized to at most 2400 px wide by the team; not cropped or edited."
+            stop["photo"] = photo
         stops.append(stop)
     stops_out = {
         "meta": {
             "ai_assistance": AI_ASSISTANCE,
             "description": "Habitat and science stops chosen by the team from "
-            "data/candidate_sites.json. Names, briefings and facts are NASA text; "
-            "'task' is left empty for the science team.",
+            "data/candidate_sites.json. Names, briefings, photos and facts are NASA "
+            "text and images; 'task' is null because no NASA source gives one.",
             "source": "NASA Mars Trek points of interest and Perseverance traverse "
             "(see DATA_SOURCES.md)",
         },

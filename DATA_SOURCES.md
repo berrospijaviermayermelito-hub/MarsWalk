@@ -111,6 +111,23 @@ Details taken from the bundle itself:
 | Accessed | 2026-11-15 |
 | Used for | `data/candidate_sites.json` (built by `preprocessing/build_candidate_sites.py`): names, coordinates and the first sentences of each NASA description, checked against the cost grid |
 
+### NASA Perseverance photos at the science stops
+
+Official NASA image releases taken by Perseverance's Mastcam-Z at each stop. Titles, dates,
+sols and credits are copied from the NASA pages. The distance is from the rover position on
+those sols (NASA traverse data) to the stop. Downloaded by `preprocessing/fetch_stop_photos.py`
+to `data/photos/` (resized to at most 2,400 px wide, not cropped or edited) and referenced in
+`data/stops.json`. Accessed 2026-11-15.
+
+| Stop | Image | NASA page | Date (sol) | Credit | Rover distance to stop |
+|---|---|---|---|---|---|
+| A Séítah | PIA24816, "Perseverance Rover's View of South Séítah" | https://science.nasa.gov/photojournal/perseverance-rovers-view-of-south-seitah/ | 2021-09-12 (sol 201) | NASA/JPL-Caltech/ASU/MSSS | 80 m |
+| B Delta front | PIA24921, on "Perseverance Explores the Jezero Crater Delta" | https://science.nasa.gov/resource/perseverance-explores-the-jezero-crater-delta/ | 2022-06-12 to 2022-06-20 (sols 466–474) | NASA/JPL-Caltech/ASU/MSSS | 1 m |
+| C Belva crater | PIA25889, "Perseverance Takes in View at Belva Crater" | https://science.nasa.gov/resource/perseverance-takes-in-view-at-belva-crater/ | 2023-04-22 (sol 772) | NASA/JPL-Caltech/ASU/MSSS | 30 m |
+
+Usage terms: JPL image and data use policy, https://www.jpl.nasa.gov/imagepolicy; the credit
+line on each image page is shown with the photo.
+
 ### Curiosity RAD surface radiation dose (reference value)
 
 | | |
@@ -146,7 +163,6 @@ and complete its URL, usage terms and access date when it is added.
 | Dataset | Mission / instrument | Source | Planned use |
 |---|---|---|---|
 | Geologic map of Jezero crater and Nili Planum (Sun & Stack, 2020, USGS SIM 3464) | — | USGS-NASA Planetary Geologic Mapping Program, doi:[10.3133/sim3464](https://doi.org/10.3133/sim3464) | Choosing stops by geologic unit |
-| Perseverance raw images (credit NASA/JPL-Caltech) | Mars 2020 cameras | https://mars.nasa.gov/mars2020/multimedia/raw-images/ | Real photo at each stop |
 
 ## References for route parameters
 
@@ -181,6 +197,7 @@ Licenses as declared in each package's metadata (versions used for preprocessing
 |---|---|---|---|
 | NumPy | 2.5.3 | BSD-3-Clause AND 0BSD AND MIT AND Zlib AND CC0-1.0 | Preprocessing |
 | Rasterio | 1.5.2 | BSD-3-Clause | Preprocessing |
+| Pillow | 12.3.0 | MIT-CMU | Preprocessing (resizing the stop photos) |
 | certifi | 2026.10.18 | MPL-2.0 | Preprocessing (TLS root certificates for the PDS download) |
 | Leaflet | 1.9.4 | BSD-2-Clause (npm package metadata) | Web app: map |
 | Chart.js | 4.4.1 | MIT (npm package metadata) | Web app: elevation profile |

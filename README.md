@@ -67,6 +67,8 @@ NASA data ──► preprocessing/ (Python) ──► data/*.json ──► web/
 | `preprocessing/download_trek_tiles.py` | Downloads a local backup of NASA Mars Trek map tiles |
 | `data/tiles/` | Backup of the CTX Jezero mosaic tiles (zoom 0–13), same folder layout as Mars Trek; `index.json` lists the URL templates and tile ranges |
 | `data/stops.json` | Habitat and science stops chosen by the team, with NASA briefings and source URLs |
+| `preprocessing/fetch_stop_photos.py` | Downloads the NASA Perseverance photo of each stop |
+| `data/photos/` | One official NASA Mastcam-Z photo per stop (PIA24816, PIA24921, PIA25889) |
 | `data/radiation_context.json` | Reference surface radiation dose rate (Curiosity RAD, Gale crater) for EVA dose context |
 | `preprocessing/build_overlays.py` | Renders the cost grid as transparent PNG overlays for the map |
 | `data/overlays/` | `slope.png`, `blocked.png` and `overlays.json` (bounds and legend) |
