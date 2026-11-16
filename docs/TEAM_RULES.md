@@ -110,5 +110,5 @@ read these files; sample or illustrative values must not be shown.
 | Owner | Item |
 |---|---|
 | Science | The CRISM references for clays and carbonates (Goudge et al. 2015, Horgan et al. 2020) are not verified yet; verify them or do not use them. |
-| Pitch | Add the demo link to the README "Links" table. 30-second video or ≤ 7 slides, in English or with English subtitles; AI images watermarked; no NASA logo. |
+| Pitch | Demo link added to the README (https://www.youtube.com/watch?v=MYktgqRbwQQ). Check it is 30 s or less, public without login, and has English subtitles if spoken in Spanish. 30-second video or ≤ 7 slides, in English or with English subtitles; AI images watermarked; no NASA logo. |
 | All | Before submitting: open every link (repository, prototype, documentation, demo) in a private browser window. |
