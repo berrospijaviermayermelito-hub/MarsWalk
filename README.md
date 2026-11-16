@@ -25,7 +25,7 @@ One screen answers three questions for a human explorer:
 | **Live app** (GitHub Pages, no login) | https://berrospijaviermayermelito-hub.github.io/MarsWalk/web/ |
 | **Repository** | https://github.com/berrospijaviermayermelito-hub/MarsWalk |
 | **Documentation** | This README, [DATA_SOURCES.md](DATA_SOURCES.md) and [docs/TEAM_RULES.md](docs/TEAM_RULES.md) |
-| **Demo** | To be added before submission |
+| **Demo** (video, 30 s) | https://www.youtube.com/watch?v=MYktgqRbwQQ |
 
 The live app is published from the `main` branch. Use *Run locally* below only for development.
 
